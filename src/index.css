@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-brand-cream text-brand-charcoal font-body antialiased;
+}
+
+h1, h2, h3, h4 {
+  @apply font-display;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #f3ead6;
+}
+::-webkit-scrollbar-thumb {
+  background: #c13a2c;
+  border-radius: 6px;
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 bg-brand-red text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-brand-reddark transition shadow-md hover:shadow-lg disabled:opacity-60;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 bg-brand-green text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-brand-greendark transition shadow-md hover:shadow-lg disabled:opacity-60;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 border-2 border-brand-red text-brand-red font-semibold px-5 py-2.5 rounded-xl hover:bg-brand-red hover:text-white transition;
+  }
+  .input {
+    @apply w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-red/50 focus:border-brand-red transition placeholder:text-gray-400;
+  }
+  .label {
+    @apply block text-sm font-medium text-brand-charcoal mb-1.5;
+  }
+  .card {
+    @apply bg-white rounded-2xl shadow-card p-6;
+  }
+  .badge {
+    @apply inline-block text-xs font-semibold px-3 py-1 rounded-full;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area, .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

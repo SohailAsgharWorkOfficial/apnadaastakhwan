@@ -1,0 +1,74 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // users: anyone signed-in can read minimal public info needed for delivery sheets (admin only),
+    // owners read/update their own profile
+    match /users/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if isSignedIn() && request.auth.uid == uid
+        && request.resource.data.role == 'customer';
+      allow update: if isSignedIn() && (request.auth.uid == uid || isAdmin())
+        // customers cannot escalate their own role
+        && (isAdmin() || request.resource.data.role == resource.data.role);
+      allow delete: if isAdmin();
+    }
+
+    // plans: public read, admin-only write
+    match /plans/{planId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 4-week rotational dinner menu: public read, admin-only write
+    match /rotationalMenu/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // app config (addons, group order settings): public read, admin-only write
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // legacy weeklyMenu collection: public read, admin-only write
+    match /weeklyMenu/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // subscriptions: owner or admin
+    match /subscriptions/{subId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.paymentStatus in ['unpaid', 'paid'];
+
+      // Admin can update anything
+      allow update: if isAdmin()
+        // Customers can only pause/resume/cancel their own active subscription
+        || (isSignedIn()
+            && resource.data.userId == request.auth.uid
+            && resource.data.status in ['active', 'paused', 'pending']
+            && request.resource.data.userId == resource.data.userId
+            && request.resource.data.planId == resource.data.planId
+            && request.resource.data.totalAmount == resource.data.totalAmount
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['pausedDates', 'endDate', 'status', 'updatedAt', 'address', 'area', 'phone']));
+
+      allow delete: if isAdmin();
+    }
+  }
+}

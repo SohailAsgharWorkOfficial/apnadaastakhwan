@@ -208,7 +208,7 @@ export default function Home() {
           </div>
 
           {/* Right — layered card stack */}
-          <div className="relative">
+          <div className="relative pb-48">
             <div
               className="absolute -inset-6 rounded-full bg-brand-red-ink/10 blur-3xl"
               aria-hidden="true"
@@ -216,9 +216,9 @@ export default function Home() {
 
             <div className="relative">
               {/* Main brand card */}
-              <div className="bg-brand-surface rounded-[2rem] shadow-card-lg p-10 pb-14 border border-gray-200/70">
+              <div className="bg-brand-surface rounded-[2rem] shadow-card-lg p-10 border border-gray-200/70">
                 <FullLogo width={290} eager className="mx-auto" />
-                <p className="font-display text-lg font-bold text-center mt-4 text-gray-900">
+                <p className="font-display text-lg font-bold text-center mt-5 text-gray-900">
                   {BRAND_TAGLINE}
                 </p>
                 <p className="text-center text-sm text-gray-500 mt-1">
@@ -226,38 +226,41 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* Floating: tonight's dish */}
-              <div className="absolute -bottom-8 -left-3 sm:-left-10 w-56 sm:w-64 bg-brand-surface rounded-2xl shadow-card-lg border border-gray-200 p-4">
-                <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-brand-red-ink mb-2">
-                  <Flame size={12} aria-hidden="true" /> Tonight&rsquo;s dinner
-                </div>
-                {menuLoading ? (
-                  <div className="h-10 rounded bg-brand-creamdark animate-pulse" />
-                ) : tonight?.title ? (
-                  <>
-                    <p className="font-display font-bold text-sm text-gray-900 leading-snug">
-                      {tonight.title}
-                    </p>
-                    <p className="text-[11px] text-gray-500 mt-1 line-clamp-2">
-                      {tonight.description}
-                    </p>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mt-2">
-                      Week {tonight.week} &middot; {fmtDate(todayStr())}
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-sm text-gray-400">Menu updating…</p>
-                )}
-              </div>
-
-              {/* Floating: delivery window */}
-              <div className="absolute -top-5 -right-2 sm:-right-6 bg-brand-charcoal text-brand-ivory rounded-2xl shadow-card-lg px-4 py-3 flex items-center gap-2.5">
+              {/* Floating: delivery window — hangs over the top-right corner,
+                  clear of the artwork. */}
+              <div className="absolute -top-8 -right-3 sm:-right-8 bg-brand-charcoal text-brand-ivory rounded-2xl shadow-card-lg px-4 py-3 flex items-center gap-2.5">
                 <Timer size={18} className="text-brand-mustard shrink-0" aria-hidden="true" />
                 <div>
                   <p className="text-[11px] text-brand-ivory/70 leading-none">Delivered by</p>
                   <p className="text-sm font-bold leading-tight mt-0.5">8 – 9:30 PM</p>
                 </div>
               </div>
+            </div>
+
+            {/* Floating: tonight's dish — sits below the card, offset left.
+                Deliberately not overlapping: the logo artwork runs to the very
+                edge of its frame, so anything on top of it would hide it. */}
+            <div className="absolute bottom-0 -left-3 sm:-left-10 w-56 sm:w-64 min-h-[168px] bg-brand-surface rounded-2xl shadow-card-lg border border-gray-200 p-4">
+              <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-brand-red-ink mb-2">
+                <Flame size={12} aria-hidden="true" /> Tonight&rsquo;s dinner
+              </div>
+              {menuLoading ? (
+                <div className="h-10 rounded bg-brand-creamdark animate-pulse" />
+              ) : tonight?.title ? (
+                <>
+                  <p className="font-display font-bold text-sm text-gray-900 leading-snug">
+                    {tonight.title}
+                  </p>
+                  <p className="text-[11px] text-gray-500 mt-1 line-clamp-2">
+                    {tonight.description}
+                  </p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mt-2">
+                    Week {tonight.week} &middot; {fmtDate(todayStr())}
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-gray-400">Menu updating…</p>
+              )}
             </div>
           </div>
         </div>

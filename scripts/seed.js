@@ -1,33 +1,44 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
-import dotenv from 'dotenv';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { readFileSync } from 'node:fs';
 
-let cfg = {};
-try {
-  dotenv.config();
-  cfg = {
-    apiKey: process.env.VITE_FIREBASE_API_KEY,
-    authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.VITE_FIREBASE_APP_ID,
-  };
-} catch {
-  cfg = {};
+// Node 20.6+ can load .env natively; fall back to a tiny parser so the
+// script still works on older runtimes and without the dotenv package.
+function loadEnv() {
+  try {
+    process.loadEnvFile();
+    return;
+  } catch {
+    /* not supported — parse manually below */
+  }
+  try {
+    const raw = readFileSync(new URL('../.env', import.meta.url), 'utf8');
+    raw.split(/\r?\n/).forEach((line) => {
+      const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
+      if (!match) return;
+      const value = match[2].replace(/^["']|["']$/g, '');
+      if (process.env[match[1]] === undefined) process.env[match[1]] = value;
+    });
+  } catch {
+    console.warn('.env not found — relying on ambient environment variables.');
+  }
 }
 
-cfg = {
-  apiKey: cfg.apiKey || 'YOUR_API_KEY',
-  authDomain: cfg.authDomain || 'YOUR_AUTH_DOMAIN',
-  projectId: cfg.projectId || 'YOUR_PROJECT_ID',
-  storageBucket: cfg.storageBucket || 'YOUR_STORAGE_BUCKET',
-  messagingSenderId: cfg.messagingSenderId || 'YOUR_SENDER_ID',
-  appId: cfg.appId || 'YOUR_APP_ID',
+loadEnv();
+
+const cfg = {
+  apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(cfg);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 const meal = (title, description) => ({ title, description, imageUrl: '', available: true });
 
@@ -100,20 +111,20 @@ const ROTATIONAL_MENU = {
   week1: {
     week: 1,
     days: {
-      Monday: meal('Chicken Curry + Daal Fry', 'Chicken curry with daal fry, 2 chapati & fresh salad'),
-      Tuesday: meal('Kachri Pulao', 'Kachri pulao served with fresh raita'),
+      Monday: meal('Chicken 2 Chapati + Daalani Salad', 'Chicken curry with 2 chapati & daalani salad'),
+      Tuesday: meal('Kachri Pulao with Raita', 'Kachri pulao served with fresh raita'),
       Wednesday: meal('Channa Qeema', 'Channa qeema with 2 chapati & salad'),
-      Thursday: meal('Mix Vegetable', 'Mix vegetable sabzi with 2 chapati'),
-      Friday: meal('Chicken Biryani', 'Chicken biryani served with raita'),
+      Thursday: meal('Vegetable', 'Mix vegetable sabzi with 2 chapati'),
+      Friday: meal('Chicken Biryani with Raita', 'Chicken biryani served with raita'),
       Saturday: meal('Kebab Masala', 'Kebab masala with 2 chapati'),
     },
   },
   week2: {
     week: 2,
     days: {
-      Monday: meal('Chicken Karahi', 'Desi chicken karahi with 2 chapati'),
-      Tuesday: meal('Dal Chawal', 'Dal tadka with steamed rice & salad'),
-      Wednesday: meal('Aloo Keema', 'Aloo keema with 2 chapati & salad'),
+      Monday: meal('Chicken Karahi', 'Chicken karahi with 2 chapati'),
+      Tuesday: meal('Dal Chawal with Salad', 'Dal tadka with steamed rice & salad'),
+      Wednesday: meal('Aloo Ke Qeema', 'Aloo ke qeema with 2 chapati & salad'),
       Thursday: meal('Anda Curry', 'Egg curry with 2 chapati'),
       Friday: meal('Chicken Yakhni Pulao', 'Aromatic chicken yakhni pulao'),
       Saturday: meal('Shami Kebab', 'Shami kebab with raita, salad & mint sauce'),
@@ -123,7 +134,7 @@ const ROTATIONAL_MENU = {
     week: 3,
     days: {
       Monday: meal('Chicken Qorma', 'Chicken qorma with 2 chapati & salad'),
-      Tuesday: meal('Palak Dal', 'Palak dal with roti'),
+      Tuesday: meal('Palak Dal with Roti', 'Palak dal with roti'),
       Wednesday: meal('Aloo Pulao', 'Aloo pulao with 2 chapati'),
       Thursday: meal('Chicken Kofte Curry', 'Chicken kofte curry with 2 chapati & salad'),
       Friday: meal('Chicken Jalfrezi', 'Chicken jalfrezi with Bukhari raita'),
@@ -134,7 +145,7 @@ const ROTATIONAL_MENU = {
     week: 4,
     days: {
       Monday: meal('Keema Karahi', 'Keema karahi with 2 chapati & salad'),
-      Tuesday: meal('Dal Chana', 'Dal chana with roti'),
+      Tuesday: meal('Dal Chana with Roti', 'Dal chana with roti'),
       Wednesday: meal('Beef Yakhni Pulao', 'Beef yakhni pulao with raita & salad'),
       Thursday: meal('Anda Masala', 'Anda masala with 2 chapati'),
       Friday: meal('Chana Pulao', 'Chana pulao with raita & salad'),
@@ -146,8 +157,41 @@ const ROTATIONAL_MENU = {
 // ===== CONFIG =====
 const GROUP_ORDER = { enabled: true, minPacks: 3, discountPercent: 10 };
 
+/**
+ * Firestore rules allow catalog writes for admins only, so sign in with an
+ * admin account before writing. Credentials come from SEED_ADMIN_EMAIL /
+ * SEED_ADMIN_PASSWORD (env or .env) — never hard-coded.
+ */
+async function authenticateAdmin() {
+  const email = process.env.SEED_ADMIN_EMAIL;
+  const password = process.env.SEED_ADMIN_PASSWORD;
+
+  if (!email || !password) {
+    console.log(
+      '\nNo SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD found.\n' +
+        'Seeding will be attempted without signing in — that only works if\n' +
+        'Firestore rules currently allow anonymous writes.\n'
+    );
+    return null;
+  }
+
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    console.log(`Signed in as admin: ${cred.user.email}`);
+    return cred.user;
+  } catch (err) {
+    console.error(`Admin sign-in failed: ${err.code || err.message}`);
+    console.error(
+      'Make sure this account exists and has role "admin" in users/{uid}.'
+    );
+    process.exit(1);
+  }
+}
+
 async function seed() {
   console.log('Seeding plans, add-ons, 4-week rotational menu & config...');
+
+  await authenticateAdmin();
 
   for (const plan of PLANS) {
     await setDoc(doc(db, 'plans', plan.id), plan);
@@ -168,12 +212,14 @@ async function seed() {
   console.log('\nDone! Admin setup:');
   console.log('1. Register a normal account in the app');
   console.log('2. Firebase Console -> Firestore -> users/{uid}, set role: "admin"');
+  console.log('3. Add SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD to .env to re-seed later');
   process.exit(0);
 }
 
 seed().catch((e) => {
-  console.error('Seed failed:', e);
-  console.error('\nIf you got PERMISSION_DENIED: temporarily set Firestore rules to');
-  console.error('allow write: if true;  then run again and restore the real rules.');
+  console.error('Seed failed:', e.code || e.message);
+  console.error('\nIf you got PERMISSION_DENIED: set SEED_ADMIN_EMAIL and');
+  console.error('SEED_ADMIN_PASSWORD in .env for an account whose Firestore');
+  console.error('users/{uid} doc has role: "admin", then run again.');
   process.exit(1);
 });

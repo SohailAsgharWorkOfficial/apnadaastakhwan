@@ -12,7 +12,7 @@ export const WEEKS = [1, 2, 3, 4];
 export const WHATSAPP_NUMBER = '923303038457';
 export const WHATSAPP_DISPLAY = '+92 330 3038457';
 export const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-  'Assalam o Alaikum! I want to order dinner tiffin from ApnaDastakhwan. 🍲'
+  'Assalam o Alaikum! I want to order dinner tiffin from ApnaDastarkhwan. 🍲'
 )}`;
 
 export const BRAND_TAGLINE = 'Ghar ka Khaana, Sehat bhi!';
@@ -26,7 +26,7 @@ export const COVERAGE = {
 export const NAYAPAY_ACCOUNT = {
   label: 'NayaPay',
   id: '0330-3038457',
-  name: 'ApnaDastakhwan',
+  name: 'ApnaDastarkhwan',
 };
 
 export const TIME_SLOTS = {

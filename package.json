@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "seed": "node scripts/seed.js"
+    "seed": "node scripts/seed.js",
+    "check:firebase": "node scripts/check-firebase.js",
+    "test": "node --test functions/test/adapters.test.js functions/test/cloudinary.test.js"
   },
   "dependencies": {
     "firebase": "^10.14.1",

@@ -15,12 +15,20 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Toaster
             position="top-center"
             toastOptions={{
+              duration: 3500,
               style: {
-                background: '#2D2A26',
-                color: '#FBF5E9',
+                background: 'rgb(var(--c-charcoal))',
+                color: 'rgb(var(--c-ivory))',
                 borderRadius: '12px',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                padding: '10px 16px',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.18)',
               },
+              success: { iconTheme: { primary: '#4F6D2A', secondary: '#FAF6F0' } },
+              error: { iconTheme: { primary: '#9E2A3A', secondary: '#FAF6F0' } },
             }}
+            aria-live="polite"
           />
           <App />
         </CartProvider>

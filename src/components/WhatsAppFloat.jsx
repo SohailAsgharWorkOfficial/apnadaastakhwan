@@ -6,7 +6,13 @@ export default function WhatsAppFloat() {
       href={WHATSAPP_LINK}
       target="_blank"
       rel="noreferrer"
-      className="no-print fixed bottom-5 right-5 z-40 flex items-center gap-2 bg-[#25D366] text-white font-semibold pl-3 pr-4 py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition"
+      className="no-print fixed bottom-5 right-5 z-40 inline-flex items-center gap-2
+        bg-[#25D366] text-white font-semibold pl-3 pr-4 py-3 rounded-full shadow-lg
+        hover:shadow-xl hover:bg-[#1EBE5A]
+        transition duration-200
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2
+        focus-visible:ring-offset-brand-cream"
+      aria-label="Order a dinner tiffin on WhatsApp (opens in a new tab)"
       title="Quick order / chat on WhatsApp"
     >
       <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
-import { Users, Utensils, Wallet, IndianRupee, TrendingUp, Clock } from 'lucide-react';
+import { Users, Utensils, Wallet, Banknote, TrendingUp, Clock } from 'lucide-react';
 import { db } from '../../firebase/firebase';
 import {
   formatPKR,
@@ -83,14 +83,14 @@ export default function AdminOverview() {
       label: 'Active Subscribers',
       value: active.length,
       sub: `Monthly ${byDuration('monthly')} • Weekly ${byDuration('weekly')} • Daily ${byDuration('daily')}`,
-      color: 'text-brand-green bg-brand-green/10',
+      color: 'text-brand-green-ink bg-brand-green-ink/10',
     },
     {
       icon: Utensils,
       label: `Tonight's Kitchen Prep (${todayName()})`,
       value: `${dinnerBoxes} boxes`,
       sub: `${tonightDish} • Week ${week} • paused excluded • Sun off`,
-      color: 'text-brand-red bg-brand-red/10',
+      color: 'text-brand-red-ink bg-brand-red-ink/10',
     },
     {
       icon: Wallet,
@@ -100,11 +100,11 @@ export default function AdminOverview() {
       color: 'text-brand-wood bg-brand-mustard/20',
     },
     {
-      icon: IndianRupee,
+      icon: Banknote,
       label: 'Pending COD Collection',
       value: formatPKR(pendingCOD),
       sub: `${pendingNayaPay} NayaPay payment(s) awaiting verification`,
-      color: 'text-orange-600 bg-orange-100',
+      color: 'text-orange-700 bg-orange-100',
     },
   ];
 
@@ -112,7 +112,7 @@ export default function AdminOverview() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-1">Kitchen Overview</h1>
+      <h1 className="text-2xl font-bold mb-1 text-gray-900">Kitchen Overview</h1>
       <p className="text-gray-500 text-sm mb-6 flex items-center gap-1.5">
         <Clock size={14} /> Live snapshot for {todayName()}, {today}
       </p>
@@ -124,16 +124,17 @@ export default function AdminOverview() {
               <s.icon size={20} />
             </div>
             <p className="text-xs text-gray-500 font-medium">{s.label}</p>
-            <p className="font-display text-2xl font-extrabold mt-0.5">{s.value}</p>
-            <p className="text-[11px] text-gray-400 mt-1">{s.sub}</p>
+            <p className="font-display text-2xl font-extrabold mt-0.5 text-gray-900">{s.value}</p>
+            <p className="text-[11px] text-gray-500 mt-1">{s.sub}</p>
           </div>
         ))}
       </div>
 
       <div className="card">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-lg font-bold flex items-center gap-2">
-            <TrendingUp size={18} className="text-brand-green" /> Recent Subscriptions
+          <h2 className="font-display text-lg font-bold flex items-center gap-2 text-gray-900">
+            <TrendingUp size={18} className="text-brand-green-ink" aria-hidden="true" /> Recent
+            Subscriptions
           </h2>
         </div>
         {recent.length === 0 ? (
@@ -141,27 +142,35 @@ export default function AdminOverview() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[560px]">
-              <thead className="text-left text-gray-400 text-xs uppercase">
+              <thead className="text-left text-gray-500 text-xs uppercase">
                 <tr>
-                  <th className="pb-2">Customer</th>
-                  <th className="pb-2">Plan</th>
-                  <th className="pb-2">Amount</th>
-                  <th className="pb-2">Payment</th>
-                  <th className="pb-2">Status</th>
+                  <th scope="col" className="pb-2">Customer</th>
+                  <th scope="col" className="pb-2">Plan</th>
+                  <th scope="col" className="pb-2">Amount</th>
+                  <th scope="col" className="pb-2">Payment</th>
+                  <th scope="col" className="pb-2">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {recent.map((s) => (
-                  <tr key={s.id} className="border-t border-brand-creamdark">
-                    <td className="py-2.5 font-medium">{s.customerName}</td>
-                    <td className="py-2.5">{s.planTitle}</td>
-                    <td className="py-2.5 font-semibold text-brand-red">{formatPKR(s.totalAmount)}</td>
+                  <tr key={s.id} className="border-t border-gray-200">
+                    <td className="py-2.5 font-medium text-gray-800">{s.customerName}</td>
+                    <td className="py-2.5 text-gray-600">{s.planTitle}</td>
+                    <td className="py-2.5 font-semibold text-brand-red-ink">
+                      {formatPKR(s.totalAmount)}
+                    </td>
                     <td className="py-2.5">
-                      <span className={`badge ${s.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                      <span
+                        className={`badge ${
+                          s.paymentStatus === 'paid'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}
+                      >
                         {s.paymentStatus}
                       </span>
                     </td>
-                    <td className="py-2.5 capitalize">{s.status.replace('_', ' ')}</td>
+                    <td className="py-2.5 capitalize text-gray-600">{s.status.replace('_', ' ')}</td>
                   </tr>
                 ))}
               </tbody>

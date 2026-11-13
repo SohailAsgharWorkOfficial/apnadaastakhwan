@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { Package, Plus, Pencil, Trash2, X, Power, Users } from 'lucide-react';
+import { Package, Plus, Pencil, Trash2, X, Power, Users, Moon } from 'lucide-react';
 import { db } from '../../firebase/firebase';
 import { GROUP_ORDER_DEFAULTS } from '../../utils/constants';
 import Loader from '../../components/Loader';
+import Modal from '../../components/Modal';
 import toast from 'react-hot-toast';
 
 const emptyPlan = {
@@ -110,47 +111,78 @@ export default function AdminPlans() {
     <div>
       <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Package size={22} className="text-brand-red" /> Plans & Pricing
+          <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-900">
+            <Package size={22} className="text-brand-red-ink" aria-hidden="true" /> Plans &amp;
+            Pricing
           </h1>
           <p className="text-gray-500 text-sm">Manage tiffin packages shown to customers (PKR)</p>
         </div>
-        <button onClick={() => openEditor(null)} className="btn-primary">
-          <Plus size={16} /> New Plan
+        <button type="button" onClick={() => openEditor(null)} className="btn-primary">
+          <Plus size={16} aria-hidden="true" /> New Plan
         </button>
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {plans.map((p) => (
           <div key={p.id} className={`card !p-5 ${!p.isActive ? 'opacity-60' : ''}`}>
-            <div className="flex justify-between items-start mb-2">
+            <div className="flex justify-between items-start mb-2 gap-2">
               <div className="flex flex-wrap gap-1.5">
-                <span className="badge bg-brand-green/10 text-brand-green capitalize">
-                  {p.durationType === 'daily' ? 'Daily Tiffin' : p.durationType === 'weekly' ? 'Weekly Trial' : 'Monthly'}
+                <span className="badge bg-brand-green-ink/10 text-brand-green-ink capitalize">
+                  {p.durationType === 'daily'
+                    ? 'Daily Tiffin'
+                    : p.durationType === 'weekly'
+                      ? 'Weekly Trial'
+                      : 'Monthly'}
                 </span>
-                <span className="badge bg-brand-mustard/20 text-brand-wood capitalize">🌙 Dinner</span>
-                {p.isPopular && <span className="badge bg-brand-red/10 text-brand-red">Popular</span>}
+                <span className="badge bg-brand-mustard/20 text-brand-wood capitalize">
+                  <Moon size={11} aria-hidden="true" /> Dinner
+                </span>
+                {p.isPopular && (
+                  <span className="badge bg-brand-red-ink/10 text-brand-red-ink">Popular</span>
+                )}
               </div>
-              <span className={`badge ${p.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+              <span
+                className={`badge ${
+                  p.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700'
+                }`}
+              >
                 {p.isActive ? 'Active' : 'Disabled'}
               </span>
             </div>
-            <h3 className="font-display font-bold">{p.title}</h3>
-            <p className="font-display text-2xl font-extrabold text-brand-red my-1">
+            <h2 className="font-display font-bold text-gray-900">{p.title}</h2>
+            <p className="font-display text-2xl font-extrabold text-brand-red-ink my-1">
               PKR {Number(p.pricePKR).toLocaleString()}
             </p>
             <ul className="text-xs text-gray-500 space-y-1 my-3 min-h-[40px]">
-              {(p.features || []).slice(0, 3).map((f, i) => <li key={i}>• {f}</li>)}
+              {(p.features || []).slice(0, 3).map((f, i) => (
+                <li key={i}>• {f}</li>
+              ))}
             </ul>
             <div className="flex gap-2 mt-2">
-              <button onClick={() => openEditor(p)} className="btn-outline flex-1 !py-2 text-xs">
-                <Pencil size={13} /> Edit
+              <button
+                type="button"
+                onClick={() => openEditor(p)}
+                className="btn-outline flex-1 !py-2 text-xs"
+              >
+                <Pencil size={13} aria-hidden="true" /> Edit
               </button>
-              <button onClick={() => toggleActive(p)} className="btn-secondary !py-2 !px-3 text-xs" title="Enable/Disable">
-                <Power size={13} />
+              <button
+                type="button"
+                onClick={() => toggleActive(p)}
+                className="btn-secondary !py-2 !px-3 text-xs"
+                aria-label={p.isActive ? `Disable ${p.title}` : `Enable ${p.title}`}
+                title={p.isActive ? 'Disable' : 'Enable'}
+              >
+                <Power size={13} aria-hidden="true" />
               </button>
-              <button onClick={() => removePlan(p)} className="bg-red-100 text-red-600 hover:bg-red-200 rounded-xl px-3 py-2 transition" title="Delete">
-                <Trash2 size={13} />
+              <button
+                type="button"
+                onClick={() => removePlan(p)}
+                className="bg-red-100 text-red-700 hover:bg-red-200 rounded-xl px-3 py-2 transition duration-200"
+                aria-label={`Delete ${p.title}`}
+                title="Delete"
+              >
+                <Trash2 size={13} aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -159,17 +191,24 @@ export default function AdminPlans() {
 
       {/* Group order config */}
       <div className="mt-10">
-        <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
-          <Users size={20} className="text-brand-red" /> Group / Hostel Bulk Discount
+        <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2 text-gray-900">
+          <Users size={20} className="text-brand-red-ink" aria-hidden="true" /> Group / Hostel Bulk
+          Discount
         </h2>
         <div className="card !p-5 max-w-2xl">
           <div className="grid sm:grid-cols-3 gap-4 items-end">
             <div>
-              <label className="label">Bulk Discount Enabled</label>
-              <label className="flex items-center gap-2 text-sm">
+              <label className="label" htmlFor="group-enabled">
+                Bulk Discount Enabled
+              </label>
+              <label
+                htmlFor="group-enabled"
+                className="flex items-center gap-2 text-sm text-gray-700"
+              >
                 <input
+                  id="group-enabled"
                   type="checkbox"
-                  className="w-4 h-4 accent-red-700"
+                  className="h-4 w-4 accent-[#9E2A3A]"
                   checked={groupCfg.enabled}
                   onChange={(e) => setGroupCfg({ ...groupCfg, enabled: e.target.checked })}
                 />
@@ -177,25 +216,36 @@ export default function AdminPlans() {
               </label>
             </div>
             <div>
-              <label className="label">Min Packs</label>
+              <label className="label" htmlFor="group-min-packs">
+                Min Packs
+              </label>
               <input
+                id="group-min-packs"
                 type="number"
                 className="input"
                 value={groupCfg.minPacks}
-                onChange={(e) => setGroupCfg({ ...groupCfg, minPacks: Number(e.target.value) })}
+                onChange={(e) =>
+                  setGroupCfg({ ...groupCfg, minPacks: Number(e.target.value) })
+                }
               />
             </div>
             <div>
-              <label className="label">Discount %</label>
+              <label className="label" htmlFor="group-discount">
+                Discount %
+              </label>
               <input
+                id="group-discount"
                 type="number"
                 className="input"
                 value={groupCfg.discountPercent}
-                onChange={(e) => setGroupCfg({ ...groupCfg, discountPercent: Number(e.target.value) })}
+                onChange={(e) =>
+                  setGroupCfg({ ...groupCfg, discountPercent: Number(e.target.value) })
+                }
               />
             </div>
           </div>
           <button
+            type="button"
             onClick={async () => {
               await setDoc(doc(db, 'config', 'groupOrder'), groupCfg, { merge: true });
               toast.success('Group order settings saved');
@@ -209,88 +259,167 @@ export default function AdminPlans() {
 
       {/* Add-ons manager */}
       <div className="mt-10">
-        <h2 className="font-display text-xl font-bold mb-4">Add-ons Manager</h2>
+        <h2 className="font-display text-xl font-bold mb-4 text-gray-900">Add-ons Manager</h2>
         <div className="card !p-5">
           <div className="flex flex-wrap gap-2 mb-4">
             {addons.map((a) => (
-              <span key={a.id} className="badge bg-brand-cream border border-brand-creamdark text-brand-charcoal flex items-center gap-2 !py-1.5">
+              <span
+                key={a.id}
+                className="badge bg-brand-creamdark/50 border border-gray-200 text-gray-700 flex items-center gap-2 !py-1.5"
+              >
                 {a.name} — PKR {a.pricePKR}
-                <button onClick={() => removeAddon(a.id)} className="text-red-400 hover:text-red-600">
-                  <X size={13} />
+                <button
+                  type="button"
+                  onClick={() => removeAddon(a.id)}
+                  className="inline-flex items-center justify-center h-5 w-5 rounded-full text-red-500 hover:text-red-700 hover:bg-red-100 transition duration-200"
+                  aria-label={`Remove ${a.name}`}
+                >
+                  <X size={13} aria-hidden="true" />
                 </button>
               </span>
             ))}
           </div>
           <form onSubmit={addAddon} className="flex gap-2 flex-wrap">
-            <input className="input max-w-[200px]" placeholder="Add-on name" value={addonForm.name} onChange={(e) => setAddonForm({ ...addonForm, name: e.target.value })} />
-            <input className="input max-w-[140px]" type="number" placeholder="Price PKR" value={addonForm.pricePKR} onChange={(e) => setAddonForm({ ...addonForm, pricePKR: e.target.value })} />
-            <button className="btn-secondary !py-2 text-sm">
-              <Plus size={14} /> Add
+            <label className="sr-only" htmlFor="addon-name">
+              Add-on name
+            </label>
+            <input
+              id="addon-name"
+              className="input max-w-[200px]"
+              placeholder="Add-on name"
+              value={addonForm.name}
+              onChange={(e) => setAddonForm({ ...addonForm, name: e.target.value })}
+            />
+            <label className="sr-only" htmlFor="addon-price">
+              Price in PKR
+            </label>
+            <input
+              id="addon-price"
+              className="input max-w-[140px]"
+              type="number"
+              placeholder="Price PKR"
+              value={addonForm.pricePKR}
+              onChange={(e) => setAddonForm({ ...addonForm, pricePKR: e.target.value })}
+            />
+            <button type="submit" className="btn-secondary !py-2 text-sm">
+              <Plus size={14} aria-hidden="true" /> Add
             </button>
           </form>
         </div>
       </div>
 
-      {/* Plan editor modal */}
-      {editing && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 max-h-[90vh] overflow-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-display font-bold text-lg">{editing === 'new' ? 'New Plan' : 'Edit Plan'}</h3>
-              <button onClick={() => setEditing(null)} className="text-gray-400 hover:text-red-500"><X size={20} /></button>
+      {/* Plan editor */}
+      <Modal
+        open={Boolean(editing)}
+        onClose={() => setEditing(null)}
+        title={editing === 'new' ? 'New Plan' : 'Edit Plan'}
+      >
+        <div className="space-y-3">
+          <div>
+            <label className="label" htmlFor="plan-title">
+              Plan Title
+            </label>
+            <input
+              id="plan-title"
+              className="input"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              disabled={editing !== 'new'}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label" htmlFor="plan-duration">
+                Duration
+              </label>
+              <select
+                id="plan-duration"
+                className="input"
+                value={form.durationType}
+                onChange={(e) => setForm({ ...form, durationType: e.target.value })}
+              >
+                <option value="daily">Daily (1 dinner)</option>
+                <option value="weekly">Weekly Trial (6 dinners)</option>
+                <option value="monthly">Monthly (24 dinners)</option>
+              </select>
             </div>
-            <div className="space-y-3">
-              <div>
-                <label className="label">Plan Title</label>
-                <input className="input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} disabled={editing !== 'new'} />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="label">Duration</label>
-                  <select className="input" value={form.durationType} onChange={(e) => setForm({ ...form, durationType: e.target.value })}>
-                    <option value="daily">Daily (1 dinner)</option>
-                    <option value="weekly">Weekly Trial (6 dinners)</option>
-                    <option value="monthly">Monthly (24 dinners)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="label">Meals</label>
-                  <select className="input" value={form.mealTime} onChange={(e) => setForm({ ...form, mealTime: e.target.value })} disabled>
-                    <option value="dinner">Dinner (Mon–Sat)</option>
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="label">Price (PKR)</label>
-                  <input type="number" className="input" value={form.pricePKR} onChange={(e) => setForm({ ...form, pricePKR: Number(e.target.value) })} />
-                </div>
-                <div>
-                  <label className="label">Total Meals</label>
-                  <input type="number" className="input" value={form.totalMeals || ''} onChange={(e) => setForm({ ...form, totalMeals: Number(e.target.value) })} />
-                </div>
-              </div>
-              <div>
-                <label className="label">Features (one per line)</label>
-                <textarea className="input h-24" value={featuresText} onChange={(e) => setFeaturesText(e.target.value)} />
-              </div>
-              <div className="flex gap-6">
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" className="accent-red-700" checked={!!form.isPopular} onChange={(e) => setForm({ ...form, isPopular: e.target.checked })} />
-                  Popular badge
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" className="accent-red-700" checked={form.isActive !== false} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
-                  Active
-                </label>
-              </div>
-              <button onClick={savePlan} className="btn-primary w-full" disabled={saving}>
-                {saving ? 'Saving...' : 'Save Plan'}
-              </button>
+            <div>
+              <label className="label" htmlFor="plan-mealtime">
+                Meals
+              </label>
+              <select
+                id="plan-mealtime"
+                className="input"
+                value={form.mealTime}
+                onChange={(e) => setForm({ ...form, mealTime: e.target.value })}
+                disabled
+              >
+                <option value="dinner">Dinner (Mon–Sat)</option>
+              </select>
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label" htmlFor="plan-price">
+                Price (PKR)
+              </label>
+              <input
+                id="plan-price"
+                type="number"
+                className="input"
+                value={form.pricePKR}
+                onChange={(e) => setForm({ ...form, pricePKR: Number(e.target.value) })}
+              />
+            </div>
+            <div>
+              <label className="label" htmlFor="plan-meals">
+                Total Meals
+              </label>
+              <input
+                id="plan-meals"
+                type="number"
+                className="input"
+                value={form.totalMeals || ''}
+                onChange={(e) => setForm({ ...form, totalMeals: Number(e.target.value) })}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="label" htmlFor="plan-features">
+              Features (one per line)
+            </label>
+            <textarea
+              id="plan-features"
+              className="input h-24"
+              value={featuresText}
+              onChange={(e) => setFeaturesText(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-6 flex-wrap">
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-[#9E2A3A]"
+                checked={!!form.isPopular}
+                onChange={(e) => setForm({ ...form, isPopular: e.target.checked })}
+              />
+              Popular badge
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-[#9E2A3A]"
+                checked={form.isActive !== false}
+                onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+              />
+              Active
+            </label>
+          </div>
+          <button type="button" onClick={savePlan} className="btn-primary w-full" disabled={saving}>
+            {saving ? 'Saving…' : 'Save Plan'}
+          </button>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

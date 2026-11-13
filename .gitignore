@@ -1,1 +1,5 @@
 node_modules
+dist/assets
+worker/.wrangler
+worker/node_modules
+.dev.vars

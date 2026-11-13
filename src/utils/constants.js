@@ -33,23 +33,70 @@ export const TIME_SLOTS = {
   dinner: '8:00 PM - 9:30 PM',
 };
 
-export const AREAS = [
-  'Block 16 (near Noor Masjid)',
-  'Block 13A',
-  'Block 13B',
-  'Block 13C',
-  'Block 13D',
-  'Block 4',
-  'Block 5',
-  'Block 6',
-  'Block 7',
-  'Block 8',
-  'Block 9',
-  'Block 10',
-  'Block 15',
-  'Block 17',
-  'Block 18',
-  'Other / Nearby Block',
+/**
+ * Delivery coverage, grouped by zone so the public "do you deliver to me?"
+ * checker can answer with a real window instead of a flat dropdown.
+ */
+export const DELIVERY_ZONES = [
+  {
+    id: 'core',
+    name: 'Gulshan-e-Iqbal — Core',
+    note: 'Noor Masjid & adjoining blocks',
+    eta: '8:00 – 9:30 PM',
+    blocks: [
+      'Block 16 (near Noor Masjid)',
+      'Block 13A',
+      'Block 13B',
+      'Block 13C',
+      'Block 13D',
+    ],
+  },
+  {
+    id: 'extended',
+    name: 'Gulshan-e-Iqbal — Extended',
+    note: 'Wider ring, same kitchen',
+    eta: '8:30 – 10:00 PM',
+    blocks: [
+      'Block 4',
+      'Block 5',
+      'Block 6',
+      'Block 7',
+      'Block 8',
+      'Block 9',
+      'Block 10',
+      'Block 15',
+      'Block 17',
+      'Block 18',
+    ],
+  },
+  {
+    id: 'nearby',
+    name: 'Nearby blocks',
+    note: 'Ask us — we add areas regularly',
+    eta: 'Confirm on WhatsApp',
+    blocks: ['Other / Nearby Block'],
+  },
+];
+
+export const AREAS = DELIVERY_ZONES.flatMap((z) => z.blocks);
+
+/** Find the zone that covers a given block. */
+export const zoneForArea = (area) =>
+  DELIVERY_ZONES.find((z) => z.blocks.includes(area)) || null;
+
+/**
+ * Anchor for the public menu calendar — a Monday. The 4-week rotation maps
+ * any calendar date to a week through this date, so "what am I eating on the
+ * 14th?" always gives the same answer.
+ */
+export const MENU_EPOCH = '2026-01-05'; // a Monday
+
+/** Headline numbers for the hero — edit to match your real figures. */
+export const HERO_STATS = [
+  { value: 24, suffix: '', label: 'Dishes a month', sub: '4-week rotation' },
+  { value: 6, suffix: '', label: 'Dinners a week', sub: 'Monday to Saturday' },
+  { value: 8, suffix: ' PM', label: 'At your door', sub: '8:00 – 9:30 PM' },
+  { value: 0, suffix: '', label: 'Preservatives', sub: 'Made with love' },
 ];
 
 export const PAYMENT_METHODS = [
@@ -74,6 +121,40 @@ export const SUBSCRIPTION_STATUS = [
   'completed',
   'cancelled',
 ];
+
+/** The journey a subscription moves through — used by the status timeline. */
+export const ORDER_FLOW = [
+  { id: 'pending', label: 'Order received', hint: 'We have your request' },
+  { id: 'active', label: 'Subscription active', hint: 'Your dinners are scheduled' },
+  { id: 'out_for_delivery', label: 'Out for delivery', hint: 'On the way tonight' },
+  { id: 'delivered', label: 'Delivered', hint: 'Enjoy your meal' },
+];
+
+export const STATUS_LABELS = {
+  pending: 'Awaiting confirmation',
+  active: 'Active',
+  paused: 'Paused',
+  out_for_delivery: 'Out for delivery',
+  delivered: 'Delivered',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+};
+
+/** Build a WhatsApp link with a pre-filled, context-aware message. */
+export const waLink = (message) =>
+  `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+
+/** A WhatsApp order message pre-filled with the plan and details. */
+export const waOrderMessage = ({ planTitle, area, startDate, packs } = {}) =>
+  [
+    'Assalam o Alaikum! I want to order dinner tiffin from ApnaDastarkhwan.',
+    planTitle ? `Plan: ${planTitle}` : null,
+    packs > 1 ? `Packs: ${packs}` : null,
+    area ? `Area: ${area}` : null,
+    startDate ? `Preferred start: ${startDate}` : null,
+  ]
+    .filter(Boolean)
+    .join('\n');
 
 export const STATUS_STYLES = {
   pending: 'bg-yellow-100 text-yellow-800',

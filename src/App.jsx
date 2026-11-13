@@ -10,6 +10,7 @@ import WhatsAppFloat from './components/WhatsAppFloat';
 
 import Home from './pages/Home';
 import MenuPage from './pages/MenuPage';
+import WhatsCooking from './pages/WhatsCooking';
 import PlansPage from './pages/PlansPage';
 import Checkout from './pages/Checkout';
 import Login from './pages/Login';
@@ -24,6 +25,7 @@ const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'));
 const AdminMenu = lazy(() => import('./pages/admin/AdminMenu'));
 const AdminPlans = lazy(() => import('./pages/admin/AdminPlans'));
 const AdminDelivery = lazy(() => import('./pages/admin/AdminDelivery'));
+const AdminTestimonials = lazy(() => import('./pages/admin/AdminTestimonials'));
 
 export default function App() {
   return (
@@ -39,6 +41,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/menu" element={<MenuPage />} />
+            <Route path="/whats-cooking" element={<WhatsCooking />} />
             <Route path="/plans" element={<PlansPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -71,6 +74,7 @@ export default function App() {
               <Route path="menu" element={<AdminMenu />} />
               <Route path="plans" element={<AdminPlans />} />
               <Route path="delivery" element={<AdminDelivery />} />
+              <Route path="testimonials" element={<AdminTestimonials />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

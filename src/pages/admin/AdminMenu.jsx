@@ -303,6 +303,32 @@ export default function AdminMenu() {
           </div>
 
           <div>
+            <label className="label" htmlFor="dish-tags">
+              Tags
+            </label>
+            <input
+              id="dish-tags"
+              className="input"
+              value={(form.tags || []).join(', ')}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  tags: e.target.value
+                    .split(',')
+                    .map((t) => t.trim())
+                    .filter(Boolean)
+                    .slice(0, 6),
+                })
+              }
+              placeholder="High protein, Low oil, Kid friendly"
+            />
+            <p className="hint">
+              Comma-separated. These appear as chips on the public menu — handy for
+              “high protein”, “low oil”, “kid friendly” and similar.
+            </p>
+          </div>
+
+          <div>
             <label className="label" htmlFor="dish-image">
               Dish Image
             </label>

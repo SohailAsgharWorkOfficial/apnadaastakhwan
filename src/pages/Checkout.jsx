@@ -177,6 +177,7 @@ export default function Checkout() {
         area: form.area,
         planId: plan.id,
         planTitle: plan.title,
+        planPricePKR: plan.pricePKR,
         durationType: plan.durationType,
         mealTime: 'dinner',
         selectedWeek:

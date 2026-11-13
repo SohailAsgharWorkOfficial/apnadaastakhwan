@@ -7,16 +7,21 @@ import {
   ShoppingCart,
   LogOut,
   ClipboardList,
+  MapPin,
+  Clock,
+  MessageCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import Logo from './Logo';
 import ThemeToggle from './ThemeToggle';
+import { COVERAGE, WHATSAPP_LINK, WHATSAPP_DISPLAY } from '../utils/constants';
 import toast from 'react-hot-toast';
 
 const links = [
   { to: '/', label: 'Home' },
   { to: '/menu', label: '4-Week Menu' },
+  { to: '/whats-cooking', label: "What's Cooking" },
   { to: '/plans', label: 'Packages' },
 ];
 
@@ -44,7 +49,34 @@ export default function Navbar() {
     }`;
 
   return (
-    <header className="sticky top-0 z-50 bg-brand-cream/85 backdrop-blur-md border-b border-gray-200/80 shadow-sm no-print">
+    <>
+      {/* Utility bar — the two things a hungry customer wants: how to order,
+          and whether we deliver to them. */}
+      <div className="hidden lg:block bg-brand-charcoal text-brand-ivory/85 text-xs no-print">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-9 flex items-center justify-between gap-4">
+          <p className="flex items-center gap-2">
+            <MapPin size={13} className="text-brand-mustard shrink-0" aria-hidden="true" />
+            Now delivering in {COVERAGE.hub} — {COVERAGE.detail}
+          </p>
+          <p className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5">
+              <Clock size={13} className="text-brand-mustard shrink-0" aria-hidden="true" />
+              Dinner 8:00 – 9:30 PM, Mon–Sat
+            </span>
+            <a
+              href={WHATSAPP_LINK}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 font-semibold text-brand-mustard hover:underline underline-offset-2"
+            >
+              <MessageCircle size={13} aria-hidden="true" />
+              {WHATSAPP_DISPLAY}
+            </a>
+          </p>
+        </div>
+      </div>
+
+      <header className="sticky top-0 z-50 bg-brand-cream/85 backdrop-blur-md border-b border-gray-200/80 shadow-sm no-print">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
         <Logo />
 
@@ -214,6 +246,7 @@ export default function Navbar() {
           )}
         </div>
       )}
-    </header>
+      </header>
+    </>
   );
 }

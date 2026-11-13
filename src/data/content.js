@@ -34,10 +34,10 @@ export const FAQS = [
 ];
 
 export const STATS = [
-  { value: '24', label: 'Homemade dishes', sub: '4-week rotating menu' },
-  { value: '6', label: 'Dinners a week', sub: 'Monday – Saturday' },
-  { value: '8 PM', label: 'At your door', sub: '8:00 – 9:30 PM slot' },
-  { value: '0', label: 'Preservatives', sub: 'Fresh, made with love' },
+  { value: 24, suffix: '', label: 'Dishes a month', sub: '4-week rotation' },
+  { value: 6, suffix: '', label: 'Dinners a week', sub: 'Monday to Saturday' },
+  { value: 8, suffix: ' PM', label: 'At your door', sub: '8:00 – 9:30 PM' },
+  { value: 0, suffix: '', label: 'Preservatives', sub: 'Made with love' },
 ];
 
 // "What's Included?" — from the monthly menu flyer

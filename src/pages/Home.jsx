@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   CalendarCheck,
+  CalendarDays,
   UtensilsCrossed,
   Bike,
   ShieldCheck,
@@ -16,25 +17,37 @@ import {
   Home as HomeIcon,
   Sparkles,
   CheckCircle2,
-  Moon,
+  Flame,
+  Timer,
+  Phone,
+  Star,
 } from 'lucide-react';
 import {
   COVERAGE,
   WHATSAPP_LINK,
   BRAND_TAGLINE,
   BRAND_SUBTAGLINE,
+  DELIVERY_ZONES,
+  todayStr,
+  fmtDate,
 } from '../utils/constants';
 import { STATS, TRUST_BADGES } from '../data/content';
 import PlanCard from '../components/PlanCard';
 import RotationalMenuTabs from '../components/RotationalMenuTabs';
 import Loader from '../components/Loader';
 import ErrorState from '../components/ErrorState';
+import SlowNotice from '../components/SlowNotice';
 import Reveal from '../components/Reveal';
 import SectionHeading from '../components/SectionHeading';
 import Faq from '../components/Faq';
 import BrandMark from '../components/BrandMark';
 import FullLogo from '../components/FullLogo';
+import StatCounter from '../components/StatCounter';
+import UpcomingDishes from '../components/UpcomingDishes';
+import DeliveryAreaChecker from '../components/DeliveryAreaChecker';
+import Testimonials from '../components/Testimonials';
 import { useCollection } from '../hooks/useFirestore';
+import { useMenu, dishForDate } from '../hooks/useMenu';
 
 const steps = [
   {
@@ -109,10 +122,13 @@ const reasons = [
 export default function Home() {
   const {
     data: planDocs,
-    loading,
-    error,
-    retry,
+    loading: plansLoading,
+    error: plansError,
+    slow: plansSlow,
+    retry: retryPlans,
   } = useCollection('plans');
+
+  const { menu, loading: menuLoading } = useMenu();
 
   const popularPlans = useMemo(
     () =>
@@ -125,91 +141,129 @@ export default function Home() {
     [planDocs]
   );
 
+  // Tonight's actual dish, straight from the rotation.
+  const tonight = useMemo(() => dishForDate(menu, todayStr()), [menu]);
+
   return (
     <div>
-      {/* ── Hero ─────────────────────────────────────────────────── */}
+      {/* ── Hero ───────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-gradient-to-br from-brand-cream via-brand-creamdark to-brand-cream">
         <div
           className="absolute inset-0 bg-dotted opacity-60 mask-fade-b pointer-events-none"
           aria-hidden="true"
         />
+        <div
+          className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-brand-red-ink/10 blur-3xl pointer-events-none"
+          aria-hidden="true"
+        />
 
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 mt-4 z-10 hidden md:flex items-center gap-2 badge bg-brand-green text-white !text-xs px-4 py-2 shadow-sm">
-          <MapPin size={14} aria-hidden="true" /> Now delivering in {COVERAGE.hub}
-        </div>
-
-        <div className="container-page relative py-20 md:py-28 grid md:grid-cols-2 gap-12 items-center">
-          <div className="text-center md:text-left">
-            <span className="badge bg-brand-red-ink/10 text-brand-red-ink mb-5 !text-xs px-4 py-2 md:hidden inline-flex">
-              <MapPin size={13} aria-hidden="true" /> Now delivering in {COVERAGE.hub}
-            </span>
-
-            <span className="eyebrow">
+        <div className="container-page relative py-16 md:py-24 grid lg:grid-cols-[1.05fr_0.95fr] gap-12 lg:gap-16 items-center">
+          {/* Left */}
+          <div className="text-center lg:text-left">
+            <span className="eyebrow justify-center lg:justify-start">
               <Sparkles size={13} aria-hidden="true" /> {BRAND_SUBTAGLINE}
             </span>
 
-            <h1 className="text-4xl md:text-6xl font-extrabold leading-[1.08] text-balance">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05] text-balance">
               Ghar ka Khaana,
               <br />
               <span className="text-brand-red-ink">Sehat Bhi!</span>
             </h1>
 
-            <p className="mt-5 text-lg text-gray-600 max-w-md mx-auto md:mx-0 text-pretty">
-              Homemade dinner tiffin subscriptions for bachelors, students and
-              professionals in {COVERAGE.hub}. A 4-week rotating menu — har roz kuch
-              naya, har roz ghar jaisa.
+            <p className="mt-5 text-lg text-gray-600 max-w-lg mx-auto lg:mx-0 text-pretty">
+              Homemade dinner tiffins delivered across {COVERAGE.hub}. A 4-week
+              rotating menu — <b>24 dishes, a new one every evening</b>, Monday to
+              Saturday.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-3 justify-center md:justify-start">
+            <div className="mt-8 flex flex-wrap gap-3 justify-center lg:justify-start">
               <Link to="/plans" className="btn-primary">
                 Explore Meal Plans <ArrowRight size={18} aria-hidden="true" />
               </Link>
-              <a href={WHATSAPP_LINK} target="_blank" rel="noreferrer" className="btn-secondary">
-                <UtensilsCrossed size={18} aria-hidden="true" /> WhatsApp Quick Order
+              <Link to="/whats-cooking" className="btn-outline">
+                <CalendarDays size={18} aria-hidden="true" /> See what&rsquo;s cooking
+              </Link>
+              <a
+                href={WHATSAPP_LINK}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-secondary"
+              >
+                <UtensilsCrossed size={18} aria-hidden="true" /> WhatsApp Order
               </a>
             </div>
 
-            <dl className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-5 max-w-lg mx-auto md:mx-0">
+            {/* Live stats */}
+            <dl className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-5 max-w-lg mx-auto lg:mx-0">
               {STATS.map((s) => (
-                <div key={s.label} className="text-center md:text-left">
-                  <dt className="sr-only">{s.label}</dt>
-                  <dd>
-                    <span className="font-display font-bold text-xl md:text-2xl text-brand-red-ink">
-                      {s.value}
-                    </span>
-                    <span className="block text-xs text-gray-500 mt-0.5">{s.label}</span>
-                    <span className="hidden sm:block text-[11px] text-gray-500/80">
-                      {s.sub}
-                    </span>
-                  </dd>
-                </div>
+                <StatCounter
+                  key={s.label}
+                  value={s.value}
+                  suffix={s.suffix}
+                  label={s.label}
+                  sub={s.sub}
+                />
               ))}
             </dl>
           </div>
 
-          {/* Hero visual */}
-          <Reveal className="hidden md:flex justify-center">
+          {/* Right — layered card stack */}
+          <div className="relative">
+            <div
+              className="absolute -inset-6 rounded-full bg-brand-red-ink/10 blur-3xl"
+              aria-hidden="true"
+            />
+
             <div className="relative">
-              <div
-                className="absolute -inset-8 rounded-full bg-brand-red-ink/10 blur-3xl"
-                aria-hidden="true"
-              />
-              <div className="relative bg-brand-surface rounded-[2rem] shadow-card-lg p-10 border border-gray-200/70">
+              {/* Main brand card */}
+              <div className="bg-brand-surface rounded-[2rem] shadow-card-lg p-10 pb-14 border border-gray-200/70">
                 <FullLogo width={290} eager className="mx-auto" />
                 <p className="font-display text-lg font-bold text-center mt-4 text-gray-900">
                   {BRAND_TAGLINE}
                 </p>
+                <p className="text-center text-sm text-gray-500 mt-1">
+                  Homemade &bull; Hygienic &bull; Delicious
+                </p>
+              </div>
 
-                <div className="mt-6 pt-6 border-t border-gray-200 flex items-center justify-center gap-2 text-sm font-semibold text-brand-green-ink">
-                  <Moon size={16} aria-hidden="true" /> Dinner, 8:00 – 9:30 PM
+              {/* Floating: tonight's dish */}
+              <div className="absolute -bottom-8 -left-3 sm:-left-10 w-56 sm:w-64 bg-brand-surface rounded-2xl shadow-card-lg border border-gray-200 p-4">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-brand-red-ink mb-2">
+                  <Flame size={12} aria-hidden="true" /> Tonight&rsquo;s dinner
+                </div>
+                {menuLoading ? (
+                  <div className="h-10 rounded bg-brand-creamdark animate-pulse" />
+                ) : tonight?.title ? (
+                  <>
+                    <p className="font-display font-bold text-sm text-gray-900 leading-snug">
+                      {tonight.title}
+                    </p>
+                    <p className="text-[11px] text-gray-500 mt-1 line-clamp-2">
+                      {tonight.description}
+                    </p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mt-2">
+                      Week {tonight.week} &middot; {fmtDate(todayStr())}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-400">Menu updating…</p>
+                )}
+              </div>
+
+              {/* Floating: delivery window */}
+              <div className="absolute -top-5 -right-2 sm:-right-6 bg-brand-charcoal text-brand-ivory rounded-2xl shadow-card-lg px-4 py-3 flex items-center gap-2.5">
+                <Timer size={18} className="text-brand-mustard shrink-0" aria-hidden="true" />
+                <div>
+                  <p className="text-[11px] text-brand-ivory/70 leading-none">Delivered by</p>
+                  <p className="text-sm font-bold leading-tight mt-0.5">8 – 9:30 PM</p>
                 </div>
               </div>
             </div>
-          </Reveal>
+          </div>
         </div>
       </section>
 
-      {/* ── What's included ─────────────────────────────────────── */}
+      {/* ── What's included ────────────────────────────────────────── */}
       <section className="border-y border-gray-200 bg-brand-surface">
         <div className="container-page py-8">
           <p className="eyebrow mb-5">What&rsquo;s included?</p>
@@ -233,41 +287,99 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── How it works ─────────────────────────────────────────── */}
+      {/* ── What's cooking this week ───────────────────────────────── */}
       <section className="container-page section">
-        <Reveal>
-          <SectionHeading
-            eyebrow="How it works"
-            title="How It"
-            highlight="Works"
-            description="Three simple steps to ghar-ka dinner every day"
-          />
-        </Reveal>
+        <UpcomingDishes />
+      </section>
 
-        <div className="grid md:grid-cols-3 gap-6 mt-12">
-          {steps.map((s, i) => (
-            <Reveal key={s.title} delay={i * 90}>
-              <div className="card card-hover relative h-full">
-                <span
-                  className="absolute top-4 right-5 font-display text-4xl font-bold text-brand-creamdark"
-                  aria-hidden="true"
-                >
-                  {i + 1}
-                </span>
-                <div className="w-14 h-14 rounded-2xl bg-brand-red-ink/10 flex items-center justify-center text-brand-red-ink mb-4">
-                  <s.icon size={28} aria-hidden="true" />
+      {/* ── How it works ───────────────────────────────────────────── */}
+      <section className="bg-brand-creamdark/60 section">
+        <div className="container-page">
+          <Reveal>
+            <SectionHeading
+              eyebrow="How it works"
+              title="How It"
+              highlight="Works"
+              description="Three simple steps to ghar-ka dinner every day"
+            />
+          </Reveal>
+
+          <div className="grid md:grid-cols-3 gap-6 mt-12 relative">
+            {/* connecting line */}
+            <span
+              aria-hidden="true"
+              className="hidden md:block absolute top-[4.25rem] left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-transparent via-brand-red-ink/25 to-transparent"
+            />
+            {steps.map((s, i) => (
+              <Reveal key={s.title} delay={i * 90}>
+                <div className="card card-hover relative h-full text-center md:text-left">
+                  <div className="flex md:block items-center justify-center gap-4">
+                    <div className="w-16 h-16 rounded-2xl bg-brand-red-ink/10 flex items-center justify-center text-brand-red-ink shrink-0 relative z-10">
+                      <s.icon size={28} aria-hidden="true" />
+                    </div>
+                    <span className="md:hidden font-display text-3xl font-bold text-brand-creamdark">
+                      0{i + 1}
+                    </span>
+                  </div>
+                  <h3 className="font-display text-lg font-bold mt-4 mb-2 text-gray-900">
+                    {s.title}
+                  </h3>
+                  <p className="text-sm text-gray-500 text-pretty">{s.desc}</p>
                 </div>
-                <h3 className="font-display text-lg font-bold mb-2 text-gray-900">
-                  {s.title}
-                </h3>
-                <p className="text-sm text-gray-500 text-pretty">{s.desc}</p>
-              </div>
-            </Reveal>
-          ))}
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ── Perfect for ──────────────────────────────────────────── */}
+      {/* ── Delivery areas ─────────────────────────────────────────── */}
+      <section className="container-page section">
+        <div className="grid lg:grid-cols-2 gap-12 items-start">
+          <Reveal>
+            <div>
+              <SectionHeading
+                align="left"
+                eyebrow="Where we deliver"
+                title="Do we deliver"
+                highlight="to your block?"
+                description="We deliver across Gulshan-e-Iqbal and nearby blocks every evening. Check your block below — and if it isn't listed, call us; we add areas regularly."
+              />
+
+              <div className="mt-8">
+                <DeliveryAreaChecker />
+              </div>
+            </div>
+          </Reveal>
+
+          <Reveal delay={100}>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {DELIVERY_ZONES.map((z) => (
+                <div key={z.id} className="card card-hover">
+                  <div className="flex items-start gap-3">
+                    <span className="inline-flex items-center justify-center h-9 w-9 rounded-xl bg-brand-red-ink/10 text-brand-red-ink shrink-0">
+                      <MapPin size={17} aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-display font-bold text-sm text-gray-900">
+                        {z.name}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">{z.note}</p>
+                      <p className="text-xs font-semibold text-brand-green-ink mt-2 flex items-center gap-1.5">
+                        <Timer size={12} aria-hidden="true" /> {z.eta}
+                      </p>
+                      <p className="text-[11px] text-gray-500 mt-1.5">
+                        {z.blocks.length} block{z.blocks.length > 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── Perfect for ────────────────────────────────────────────── */}
       <section className="bg-brand-creamdark/60 section">
         <div className="container-page">
           <Reveal>
@@ -295,7 +407,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Plans ────────────────────────────────────────────────── */}
+      {/* ── Packages ───────────────────────────────────────────────── */}
       <section className="container-page section">
         <Reveal>
           <SectionHeading
@@ -307,16 +419,21 @@ export default function Home() {
         </Reveal>
 
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mt-12">
-          {loading ? (
+          {plansLoading ? (
             <div className="col-span-full">
               <Loader />
+              <SlowNotice
+                slow={plansSlow}
+                onRetry={retryPlans}
+                className="max-w-xl mx-auto mt-4"
+              />
             </div>
-          ) : error ? (
+          ) : plansError ? (
             <div className="col-span-full">
               <ErrorState
                 title="Packages could not be loaded"
-                message="We could not reach the kitchen right now. Please try again in a moment."
-                onRetry={retry}
+                message={plansError.message}
+                onRetry={retryPlans}
               />
             </div>
           ) : (
@@ -328,7 +445,7 @@ export default function Home() {
           )}
         </div>
 
-        {loading ? null : (
+        {!plansLoading && !plansError && (
           <div className="text-center mt-10">
             <Link to="/plans" className="btn-outline">
               View All Plans <ArrowRight size={18} aria-hidden="true" />
@@ -337,25 +454,7 @@ export default function Home() {
         )}
       </section>
 
-      {/* ── Rotating menu ────────────────────────────────────────── */}
-      <section className="bg-brand-creamdark/60 section">
-        <div className="container-page">
-          <Reveal>
-            <SectionHeading
-              eyebrow="This month"
-              title="4-Week Rotating"
-              highlight="Dinner Menu"
-              description="24 unique homemade dishes across 4 weeks — tap a week to peek"
-            />
-          </Reveal>
-
-          <div className="mt-12">
-            <RotationalMenuTabs variant="table" />
-          </div>
-        </div>
-      </section>
-
-      {/* ── Why us ───────────────────────────────────────────────── */}
+      {/* ── Why us ─────────────────────────────────────────────────── */}
       <section className="bg-brand-charcoal text-brand-ivory section">
         <div className="container-page">
           <Reveal>
@@ -371,7 +470,7 @@ export default function Home() {
             {reasons.map((r, i) => (
               <Reveal key={r.title} delay={i * 70}>
                 <div className="h-full bg-white/5 rounded-2xl p-6 border border-white/10 transition duration-200 hover:bg-white/10">
-                  <r.icon size={30} className="text-brand-mustard mb-3" aria-hidden="true" />
+                  <r.icon size={28} className="text-brand-mustard mb-3" aria-hidden="true" />
                   <h3 className="font-display font-bold mb-1.5 text-brand-ivory">
                     {r.title}
                   </h3>
@@ -389,7 +488,38 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── FAQ ──────────────────────────────────────────────────── */}
+      {/* ── Reviews ────────────────────────────────────────────────── */}
+      <section className="container-page section">
+        <Reveal>
+          <SectionHeading
+            eyebrow="From our customers"
+            title="What they"
+            highlight="say"
+            description="Reviews are published exactly as customers sent them."
+          />
+        </Reveal>
+        <Testimonials className="mt-12" />
+      </section>
+
+      {/* ── The 4-week menu ────────────────────────────────────────── */}
+      <section className="bg-brand-creamdark/60 section">
+        <div className="container-page">
+          <Reveal>
+            <SectionHeading
+              eyebrow="This month"
+              title="4-Week Rotating"
+              highlight="Dinner Menu"
+              description="24 unique homemade dishes across 4 weeks — tap a week to peek"
+            />
+          </Reveal>
+
+          <div className="mt-12">
+            <RotationalMenuTabs variant="table" />
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ────────────────────────────────────────────────────── */}
       <section className="container-page section">
         <Reveal>
           <SectionHeading
@@ -405,7 +535,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Final CTA ────────────────────────────────────────────── */}
+      {/* ── Final CTA ──────────────────────────────────────────────── */}
       <section className="container-page pb-20">
         <Reveal>
           <div className="relative overflow-hidden rounded-[2rem] bg-brand-red px-6 py-14 md:py-20 text-center text-white shadow-card-lg">
@@ -414,10 +544,10 @@ export default function Home() {
               aria-hidden="true"
             />
             <div className="relative">
-              <span className="inline-flex items-center justify-center rounded-full bg-white p-3 shadow-md">
-                <BrandMark size={60} />
+              <span className="inline-flex items-center justify-center rounded-full bg-white/15 p-3 mb-6">
+                <BrandMark size={56} />
               </span>
-              <h2 className="text-3xl md:text-4xl font-bold mt-6 text-balance text-white">
+              <h2 className="text-3xl md:text-4xl font-bold mt-4 text-balance text-white">
                 Aaj se ghar jaisa dinner — rozana
               </h2>
               <p className="mt-3 text-white/85 max-w-xl mx-auto text-pretty">
@@ -439,6 +569,18 @@ export default function Home() {
                 >
                   <Smartphone size={18} aria-hidden="true" /> Order on WhatsApp
                 </a>
+              </div>
+
+              <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 justify-center text-xs text-white/80">
+                <span className="flex items-center gap-1.5">
+                  <Phone size={13} aria-hidden="true" /> {COVERAGE.hub}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Timer size={13} aria-hidden="true" /> 8:00 – 9:30 PM, Mon–Sat
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Star size={13} aria-hidden="true" /> No preservatives
+                </span>
               </div>
             </div>
           </div>

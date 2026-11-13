@@ -4,6 +4,7 @@ import { DAYS, WEEKS, todayName, COVERAGE } from '../utils/constants';
 import { resolveImageUrl } from '../utils/storage';
 import Loader from './Loader';
 import ErrorState from './ErrorState';
+import SlowNotice from './SlowNotice';
 import { useCollection } from '../hooks/useFirestore';
 
 /**
@@ -11,7 +12,7 @@ import { useCollection } from '../hooks/useFirestore';
  * variant: 'cards' (Menu page) | 'table' (Home page)
  */
 export default function RotationalMenuTabs({ variant = 'cards' }) {
-  const { data: docs, loading, error, retry } = useCollection('rotationalMenu');
+  const { data: docs, loading, error, slow, retry } = useCollection('rotationalMenu');
   const [week, setWeek] = useState(1);
   const today = todayName();
 
@@ -23,7 +24,14 @@ export default function RotationalMenuTabs({ variant = 'cards' }) {
     return map;
   }, [docs]);
 
-  if (loading) return <Loader label="Loading this week’s menu…" />;
+  if (loading) {
+    return (
+      <div>
+        <Loader label="Loading this week’s menu…" />
+        <SlowNotice slow={slow} onRetry={retry} className="max-w-xl mx-auto mt-4" />
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -201,6 +209,18 @@ export default function RotationalMenuTabs({ variant = 'cards' }) {
                     <p className="text-sm text-gray-500 mt-1 text-pretty">
                       {days[day].description}
                     </p>
+                    {(days[day].tags || []).length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-3">
+                        {days[day].tags.map((t) => (
+                          <span
+                            key={t}
+                            className="badge bg-brand-mustard/20 text-brand-wood"
+                          >
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </>
                 ) : (
                   <p className="text-sm text-gray-500">Not scheduled</p>

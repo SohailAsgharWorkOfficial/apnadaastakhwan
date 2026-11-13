@@ -17,6 +17,13 @@ import { db } from '../firebase/firebase';
  * re-created when the underlying query actually changes.
  */
 
+/**
+ * How long to wait for the first snapshot before telling the user that
+ * something is wrong. Without this, a stalled connection leaves the UI
+ * spinning forever with no way out.
+ */
+const FIRST_SNAPSHOT_TIMEOUT_MS = 12000;
+
 /** Turn raw Firestore errors into something a customer can act on. */
 function friendlyError(err) {
   const code = err?.code || '';
@@ -47,6 +54,7 @@ export function useCollection(
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [slow, setSlow] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
   const retry = useCallback(() => {
@@ -76,6 +84,7 @@ export function useCollection(
         setData(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
         setLoading(false);
         setError(null);
+        setSlow(false);
       },
       (err) => {
         console.error(`Firestore collection "${path}" failed:`, err);
@@ -84,10 +93,18 @@ export function useCollection(
       }
     );
 
-    return unsub;
+    // Watchdog — if nothing arrives in time, say so instead of spinning.
+    const watchdog = setTimeout(() => {
+      setSlow(true);
+    }, FIRST_SNAPSHOT_TIMEOUT_MS);
+
+    return () => {
+      clearTimeout(watchdog);
+      unsub();
+    };
   }, [path, whereField, whereValue, orderField, orderDir, enabled, attempt]);
 
-  return { data, loading, error, retry };
+  return { data, loading, error, slow, retry };
 }
 
 /** Single-document subscription (e.g. config/addons). */
@@ -95,10 +112,12 @@ export function useDocument(docPath, { enabled = true } = {}) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [slow, setSlow] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
   const retry = useCallback(() => {
     setError(null);
+    setSlow(false);
     setLoading(true);
     setAttempt((a) => a + 1);
   }, []);
@@ -116,6 +135,7 @@ export function useDocument(docPath, { enabled = true } = {}) {
         setData(snap.exists() ? { id: snap.id, ...snap.data() } : null);
         setLoading(false);
         setError(null);
+        setSlow(false);
       },
       (err) => {
         console.error(`Firestore document "${docPath}" failed:`, err);
@@ -124,8 +144,15 @@ export function useDocument(docPath, { enabled = true } = {}) {
       }
     );
 
-    return unsub;
+    const watchdog = setTimeout(() => {
+      setSlow(true);
+    }, FIRST_SNAPSHOT_TIMEOUT_MS);
+
+    return () => {
+      clearTimeout(watchdog);
+      unsub();
+    };
   }, [docPath, enabled, attempt]);
 
-  return { data, loading, error, retry };
+  return { data, loading, error, slow, retry };
 }

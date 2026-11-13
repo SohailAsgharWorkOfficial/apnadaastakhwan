@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { updateDoc, doc } from 'firebase/firestore';
 import {
   CalendarDays,
@@ -14,9 +14,12 @@ import {
   Clock,
   Lightbulb,
   Phone,
+  RefreshCw,
+  Route,
 } from 'lucide-react';
 import { db } from '../firebase/firebase';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import {
   formatPKR,
   fmtDate,
@@ -34,6 +37,7 @@ import {
 import Loader from '../components/Loader';
 import ErrorState from '../components/ErrorState';
 import SectionHeading from '../components/SectionHeading';
+import OrderTimeline from '../components/OrderTimeline';
 import { useCollection } from '../hooks/useFirestore';
 import toast from 'react-hot-toast';
 
@@ -45,6 +49,8 @@ const TABS = [
 
 export default function Dashboard() {
   const { user, profile, updateUserProfile } = useAuth();
+  const { reorderFrom } = useCart();
+  const navigate = useNavigate();
   const {
     data: subs,
     loading,
@@ -334,6 +340,15 @@ export default function Dashboard() {
                   </p>
                 </div>
 
+                {/* Where the order is */}
+                <div className="border-t border-gray-200 mt-5 pt-5">
+                  <h3 className="text-sm font-semibold mb-4 flex items-center gap-2 text-gray-800">
+                    <Route size={16} className="text-brand-red-ink" aria-hidden="true" />
+                    Where your order is
+                  </h3>
+                  <OrderTimeline status={activeSub.status} />
+                </div>
+
                 {/* Pause / skip */}
                 <div className="border-t border-gray-200 mt-5 pt-5">
                   <h3 className="text-sm font-semibold mb-2 flex items-center gap-2 text-gray-800">
@@ -538,9 +553,22 @@ export default function Dashboard() {
                     {s.groupOrder?.packs > 1 ? ` • ${s.groupOrder.packs} packs` : ''}
                   </p>
                 </div>
-                <p className="font-display font-bold text-brand-red-ink">
-                  {formatPKR(s.totalAmount)}
-                </p>
+                <div className="flex items-center gap-3">
+                  <p className="font-display font-bold text-brand-red-ink">
+                    {formatPKR(s.totalAmount)}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      reorderFrom(s);
+                      toast.success('Added to cart — review and confirm');
+                      navigate('/checkout');
+                    }}
+                    className="btn-outline !py-2 !px-3 text-xs"
+                  >
+                    <RefreshCw size={14} aria-hidden="true" /> Reorder
+                  </button>
+                </div>
               </div>
             ))
           )}

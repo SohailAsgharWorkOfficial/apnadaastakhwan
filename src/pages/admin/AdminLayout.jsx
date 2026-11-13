@@ -6,6 +6,7 @@ import {
   Package,
   Bike,
   LogOut,
+  MessageSquareQuote,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Logo from '../../components/Logo';
@@ -16,6 +17,7 @@ const navItems = [
   { to: '/admin/menu', label: 'Weekly Menu Editor', icon: UtensilsCrossed },
   { to: '/admin/plans', label: 'Plans & Pricing', icon: Package },
   { to: '/admin/delivery', label: 'Delivery Sheet', icon: Bike },
+  { to: '/admin/testimonials', label: 'Customer Reviews', icon: MessageSquareQuote },
 ];
 
 export default function AdminLayout() {

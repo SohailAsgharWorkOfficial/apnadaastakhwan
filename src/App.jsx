@@ -1,12 +1,10 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
+import { Route, Routes } from 'react-router-dom';
+
+import PublicLayout from './layouts/PublicLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
-import ScrollToTop from './components/ScrollToTop';
 import Loader from './components/Loader';
-import WhatsAppFloat from './components/WhatsAppFloat';
 
 import Home from './pages/Home';
 import MenuPage from './pages/MenuPage';
@@ -29,61 +27,92 @@ const AdminTestimonials = lazy(() => import('./pages/admin/AdminTestimonials'));
 
 export default function App() {
   return (
-    <div className="min-h-screen flex flex-col">
-      <a href="#main" className="skip-link">
-        Skip to main content
-      </a>
+    <Routes>
+      {/* ── Public site ─────────────────────────────────────────── */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/menu" element={<MenuPage />} />
+        <Route path="/whats-cooking" element={<WhatsCooking />} />
+        <Route path="/plans" element={<PlansPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route
+          path="/checkout"
+          element={
+            <ProtectedRoute>
+              <Checkout />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<NotFound />} />
+      </Route>
 
-      <Navbar />
-
-      <main id="main" className="flex-1">
-        <Suspense fallback={<Loader full />}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/menu" element={<MenuPage />} />
-            <Route path="/whats-cooking" element={<WhatsCooking />} />
-            <Route path="/plans" element={<PlansPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route
-              path="/checkout"
-              element={
-                <ProtectedRoute>
-                  <Checkout />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <AdminRoute>
-                  <AdminLayout />
-                </AdminRoute>
-              }
-            >
-              <Route index element={<AdminOverview />} />
-              <Route path="orders" element={<AdminOrders />} />
-              <Route path="menu" element={<AdminMenu />} />
-              <Route path="plans" element={<AdminPlans />} />
-              <Route path="delivery" element={<AdminDelivery />} />
-              <Route path="testimonials" element={<AdminTestimonials />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </main>
-
-      <Footer />
-      <WhatsAppFloat />
-      <ScrollToTop />
-    </div>
+      {/* ── Admin app (own chrome, no public header/footer) ──────── */}
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <AdminLayout />
+          </AdminRoute>
+        }
+      >
+        <Route
+          index
+          element={
+            <Suspense fallback={<Loader full />}>
+              <AdminOverview />
+            </Suspense>
+          }
+        />
+        <Route
+          path="orders"
+          element={
+            <Suspense fallback={<Loader full />}>
+              <AdminOrders />
+            </Suspense>
+          }
+        />
+        <Route
+          path="menu"
+          element={
+            <Suspense fallback={<Loader full />}>
+              <AdminMenu />
+            </Suspense>
+          }
+        />
+        <Route
+          path="plans"
+          element={
+            <Suspense fallback={<Loader full />}>
+              <AdminPlans />
+            </Suspense>
+          }
+        />
+        <Route
+          path="delivery"
+          element={
+            <Suspense fallback={<Loader full />}>
+              <AdminDelivery />
+            </Suspense>
+          }
+        />
+        <Route
+          path="testimonials"
+          element={
+            <Suspense fallback={<Loader full />}>
+              <AdminTestimonials />
+            </Suspense>
+          }
+        />
+      </Route>
+    </Routes>
   );
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   collection,
   onSnapshot,
@@ -7,12 +8,28 @@ import {
   updateDoc,
   doc,
 } from 'firebase/firestore';
-import { Eye, ClipboardList, Phone, PauseCircle, Check } from 'lucide-react';
+import {
+  Eye,
+  ClipboardList,
+  Phone,
+  PauseCircle,
+  Check,
+  Download,
+  Inbox,
+  Search,
+} from 'lucide-react';
 import { db } from '../../firebase/firebase';
 import { formatPKR, fmtDate, STATUS_STYLES } from '../../utils/constants';
 import { fetchPrivateImage } from '../../utils/storage';
 import Loader from '../../components/Loader';
 import Modal from '../../components/Modal';
+import {
+  PageHeader,
+  Panel,
+  AdminTable,
+  StatusPill,
+  EmptyState,
+} from '../../components/admin/AdminUI';
 import toast from 'react-hot-toast';
 
 const statusOptions = [
@@ -25,13 +42,28 @@ const statusOptions = [
   'cancelled',
 ];
 
+const FILTERS = ['all', ...statusOptions];
+
+const statusTone = (status) =>
+  status === 'active'
+    ? 'green'
+    : status === 'pending'
+      ? 'amber'
+      : status === 'cancelled'
+        ? 'red'
+        : status === 'out_for_delivery'
+          ? 'blue'
+          : 'slate';
+
 export default function AdminOrders() {
   const [subs, setSubs] = useState([]);
   const [filter, setFilter] = useState('all');
-  const [viewProof, setViewProof] = useState(null); // { url, name }
+  const [search, setSearch] = useState('');
+  const [viewProof, setViewProof] = useState(null);
   const [proofObjectUrl, setProofObjectUrl] = useState(null);
   const [proofError, setProofError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [params, setParams] = useSearchParams();
 
   useEffect(() => {
     const unsub = onSnapshot(
@@ -44,7 +76,7 @@ export default function AdminOrders() {
     return unsub;
   }, []);
 
-  // Private receipts need the Authorization header, so fetch them as blobs.
+  // Private receipts need the Authorization header, so they are fetched as blobs.
   useEffect(() => {
     if (!viewProof?.url) return undefined;
 
@@ -85,175 +117,249 @@ export default function AdminOrders() {
     }
   };
 
-  const filtered = filter === 'all' ? subs : subs.filter((s) => s.status === filter);
+  const filtered = subs
+    .filter((s) => filter === 'all' || s.status === filter)
+    .filter((s) => {
+      const q = search.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        (s.customerName || '').toLowerCase().includes(q) ||
+        (s.phone || '').includes(q) ||
+        (s.area || '').toLowerCase().includes(q)
+      );
+    });
+
+  const exportCsv = () => {
+    const rows = [
+      ['Name', 'Phone', 'Area', 'Address', 'Plan', 'Amount', 'Payment', 'Status', 'Start', 'End'],
+      ...filtered.map((s) => [
+        s.customerName,
+        s.phone,
+        s.area,
+        s.address,
+        s.planTitle,
+        s.totalAmount,
+        s.paymentStatus,
+        s.status,
+        s.startDate,
+        s.endDate,
+      ]),
+    ];
+    const csv = rows
+      .map((r) =>
+        r
+          .map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`)
+          .join(',')
+      )
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `apnadastarkhwan-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-1 flex items-center gap-2 text-gray-900">
-        <ClipboardList size={22} className="text-brand-red-ink" aria-hidden="true" /> Orders &amp;
-        Subscriptions
-      </h1>
-      <p className="text-gray-500 text-sm mb-6">
-        Real-time list — update status &amp; verify payments
-      </p>
-
-      <div
-        className="flex gap-2 flex-wrap mb-6 no-print"
-        role="group"
-        aria-label="Filter orders by status"
-      >
-        {['all', ...statusOptions].map((s) => {
-          const selected = filter === s;
-          return (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setFilter(s)}
-              aria-pressed={selected}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold capitalize transition duration-200
-                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red-ink
-                focus-visible:ring-offset-2 focus-visible:ring-offset-brand-cream
-                ${
-                  selected
-                    ? 'bg-brand-red text-white'
-                    : 'bg-brand-surface border border-gray-200 text-gray-600 hover:bg-brand-red-ink/10'
-                }`}
-            >
-              {s.replace('_', ' ')}
-              {s !== 'all' && (
-                <span className="ml-1.5 opacity-70">
-                  ({subs.filter((x) => x.status === s).length})
-                </span>
-              )}
+      <PageHeader
+        eyebrow="Manage"
+        title="Orders & Subscriptions"
+        description="Update status, verify payments and keep the kitchen list accurate."
+        actions={
+          <>
+            <button type="button" onClick={exportCsv} className="btn-outline !py-2 !px-3.5 text-sm">
+              <Download size={16} aria-hidden="true" /> Export CSV
             </button>
-          );
-        })}
+          </>
+        }
+      />
+
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-3 mb-5">
+        <div className="relative flex-1 min-w-[220px] max-w-sm">
+          <Search
+            size={16}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            aria-hidden="true"
+          />
+          <label className="sr-only" htmlFor="order-search">
+            Search orders
+          </label>
+          <input
+            id="order-search"
+            type="search"
+            className="input pl-10"
+            placeholder="Search name, phone or area…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by status">
+          {FILTERS.map((s) => {
+            const selected = filter === s;
+            const count =
+              s === 'all' ? subs.length : subs.filter((x) => x.status === s).length;
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setFilter(s)}
+                aria-pressed={selected}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold capitalize transition duration-200
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red-ink focus-visible:ring-offset-2 focus-visible:ring-offset-brand-cream
+                  ${
+                    selected
+                      ? 'bg-brand-red text-white shadow-sm'
+                      : 'bg-brand-surface border border-gray-200 text-gray-600 hover:border-brand-red-ink/40'
+                  }`}
+              >
+                {s.replace('_', ' ')}
+                <span className={selected ? 'text-white/70' : 'text-gray-400'}>
+                  {' '}
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {loading ? (
-        <Loader label="Loading orders…" />
-      ) : filtered.length === 0 ? (
-        <div className="card text-center py-10 text-gray-500">No orders in this view.</div>
-      ) : (
-        <div className="space-y-4">
-          {filtered.map((s) => (
-            <div key={s.id} className="card !p-5">
-              <div className="grid lg:grid-cols-4 gap-4 items-start">
-                {/* Info */}
-                <div className="lg:col-span-2">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <h2 className="font-display font-bold text-gray-900">{s.customerName}</h2>
-                    <span className={`badge ${STATUS_STYLES[s.status]}`}>
-                      {s.status.replace('_', ' ')}
+      <Panel>
+        {loading ? (
+          <Loader label="Loading orders…" />
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            icon={Inbox}
+            title="Nothing here"
+            message={
+              subs.length === 0
+                ? 'Orders will appear here the moment a customer subscribes.'
+                : 'No orders match this filter. Try another status or clear the search.'
+            }
+          />
+        ) : (
+          <AdminTable head={['Customer', 'Plan', 'Contact', 'Amount', 'Payment', 'Status', 'Action']} minWidth="900px">
+            {filtered.map((s) => (
+              <tr key={s.id} className="hover:bg-brand-creamdark/40 transition-colors">
+                <td className="px-5 py-3.5">
+                  <span className="flex items-center gap-2.5">
+                    <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-brand-red-ink/10 text-brand-red-ink text-xs font-bold shrink-0">
+                      {(s.customerName || '?').trim().charAt(0).toUpperCase()}
                     </span>
-                    <span
-                      className={`badge ${
-                        s.paymentStatus === 'paid'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}
-                    >
-                      {s.paymentStatus}
-                    </span>
-                  </div>
-
-                  <p className="text-sm text-gray-600">
-                    <b>{s.planTitle}</b> • {s.mealTime} • {formatPKR(s.totalAmount)}
-                  </p>
-
-                  <p className="text-xs text-gray-500 mt-1 flex items-center gap-1.5 flex-wrap">
-                    <Phone size={12} aria-hidden="true" />
-                    <a
-                      href={`tel:${s.phone}`}
-                      className="hover:text-brand-red-ink transition duration-200"
-                    >
-                      {s.phone}
-                    </a>
-                    <span aria-hidden="true">•</span>
-                    <span>
-                      {s.address}, {s.area}
-                    </span>
-                  </p>
-
-                  <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                    <span>
-                      {fmtDate(s.startDate)} → {fmtDate(s.endDate)}
-                    </span>
-                    <span aria-hidden="true">•</span>
-                    <span>{s.paymentMethod.toUpperCase()}</span>
-                    {(s.pausedDates?.length || 0) > 0 && (
-                      <span className="inline-flex items-center gap-1 text-orange-700">
-                        <PauseCircle size={12} aria-hidden="true" />
-                        Paused: {s.pausedDates.join(', ')}
+                    <span className="min-w-0">
+                      <span className="block font-semibold text-gray-900 truncate">
+                        {s.customerName}
                       </span>
-                    )}
-                  </p>
+                      <span className="block text-xs text-gray-500 truncate">
+                        {s.address}, {s.area}
+                      </span>
+                    </span>
+                  </span>
+                </td>
 
-                  {s.addons?.length > 0 && (
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      Add-ons: {s.addons.map((a) => a.name).join(', ')}
-                    </p>
+                <td className="px-5 py-3.5">
+                  <span className="block font-medium text-gray-800 whitespace-nowrap">
+                    {s.planTitle}
+                  </span>
+                  <span className="block text-xs text-gray-500 whitespace-nowrap">
+                    {fmtDate(s.startDate)} → {fmtDate(s.endDate)}
+                  </span>
+                  {(s.pausedDates?.length || 0) > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[11px] text-orange-700 mt-1">
+                      <PauseCircle size={11} aria-hidden="true" />
+                      {s.pausedDates.length} paused
+                    </span>
                   )}
-                </div>
+                </td>
 
-                {/* Status update */}
-                <div>
-                  <label className="label !text-xs" htmlFor={`status-${s.id}`}>
-                    Subscription Status
-                  </label>
-                  <select
-                    id={`status-${s.id}`}
-                    className="input !py-2 text-sm"
-                    value={s.status}
-                    onChange={(e) => update(s.id, { status: e.target.value })}
+                <td className="px-5 py-3.5">
+                  <a
+                    href={`tel:${s.phone}`}
+                    className="inline-flex items-center gap-1.5 text-sm text-brand-red-ink hover:underline whitespace-nowrap"
                   >
-                    {statusOptions.map((st) => (
-                      <option key={st} value={st}>
-                        {st.replace('_', ' ')}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                    <Phone size={13} aria-hidden="true" />
+                    {s.phone}
+                  </a>
+                </td>
 
-                {/* Payment */}
-                <div className="space-y-2">
-                  <span className="label !text-xs">Payment</span>
-                  <div className="flex gap-2">
+                <td className="px-5 py-3.5 font-semibold text-gray-900 whitespace-nowrap">
+                  {formatPKR(s.totalAmount)}
+                </td>
+
+                <td className="px-5 py-3.5">
+                  <StatusPill
+                    tone={s.paymentStatus === 'paid' ? 'green' : 'amber'}
+                  >
+                    {s.paymentStatus}
+                  </StatusPill>
+                </td>
+
+                <td className="px-5 py-3.5">
+                  <StatusPill tone={statusTone(s.status)}>
+                    {s.status.replace('_', ' ')}
+                  </StatusPill>
+                </td>
+
+                <td className="px-5 py-3.5">
+                  <div className="flex items-center gap-2">
+                    <select
+                      className="input !py-1.5 !px-2.5 !text-xs !w-auto"
+                      value={s.status}
+                      onChange={(e) => update(s.id, { status: e.target.value })}
+                      aria-label={`Change status for ${s.customerName}`}
+                    >
+                      {statusOptions.map((st) => (
+                        <option key={st} value={st}>
+                          {st.replace('_', ' ')}
+                        </option>
+                      ))}
+                    </select>
+
                     <button
                       type="button"
                       onClick={() =>
-                        update(s.id, { paymentStatus: s.paymentStatus === 'paid' ? 'unpaid' : 'paid' })
+                        update(s.id, {
+                          paymentStatus: s.paymentStatus === 'paid' ? 'unpaid' : 'paid',
+                        })
                       }
-                      className={`flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-lg transition duration-200 ${
+                      className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition duration-200 whitespace-nowrap ${
                         s.paymentStatus === 'paid'
-                          ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                          : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                          ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                          : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                      }`}
+                      aria-label={`Mark payment for ${s.customerName} as ${
+                        s.paymentStatus === 'paid' ? 'unpaid' : 'paid'
                       }`}
                     >
                       {s.paymentStatus === 'paid' && <Check size={13} aria-hidden="true" />}
-                      {s.paymentStatus === 'paid' ? 'Paid' : 'Mark Paid'}
+                      {s.paymentStatus === 'paid' ? 'Paid' : 'Mark paid'}
                     </button>
+
                     {s.paymentProofUrl && (
                       <button
                         type="button"
-                        onClick={() => setViewProof({ url: s.paymentProofUrl, name: s.customerName })}
-                        className="btn-secondary !px-3 !py-2 text-xs"
+                        onClick={() =>
+                          setViewProof({ url: s.paymentProofUrl, name: s.customerName })
+                        }
+                        className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 text-gray-600 hover:border-brand-red-ink/40 hover:text-brand-red-ink transition"
                         aria-label={`View receipt from ${s.customerName}`}
                         title="View receipt"
                       >
-                        <Eye size={14} aria-hidden="true" />
+                        <Eye size={15} aria-hidden="true" />
                       </button>
                     )}
                   </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+                </td>
+              </tr>
+            ))}
+          </AdminTable>
+        )}
+      </Panel>
 
-      {/* Payment proof — private files need an auth header, so they are
-          fetched as a blob rather than loaded straight into <img src>. */}
+      {/* Payment proof */}
       <Modal
         open={Boolean(viewProof)}
         onClose={() => {
@@ -265,7 +371,10 @@ export default function AdminOrders() {
         maxWidth="max-w-lg"
       >
         {proofError ? (
-          <div role="alert" className="rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-800 dark:text-red-200">
+          <div
+            role="alert"
+            className="rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-800 dark:text-red-200"
+          >
             {proofError}
           </div>
         ) : proofObjectUrl ? (

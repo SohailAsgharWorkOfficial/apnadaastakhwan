@@ -5,6 +5,7 @@ import { db } from '../../firebase/firebase';
 import { GROUP_ORDER_DEFAULTS } from '../../utils/constants';
 import Loader from '../../components/Loader';
 import Modal from '../../components/Modal';
+import { PageHeader } from '../../components/admin/AdminUI';
 import toast from 'react-hot-toast';
 
 const emptyPlan = {
@@ -109,18 +110,16 @@ export default function AdminPlans() {
 
   return (
     <div>
-      <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-900">
-            <Package size={22} className="text-brand-red-ink" aria-hidden="true" /> Plans &amp;
-            Pricing
-          </h1>
-          <p className="text-gray-500 text-sm">Manage tiffin packages shown to customers (PKR)</p>
-        </div>
-        <button type="button" onClick={() => openEditor(null)} className="btn-primary">
-          <Plus size={16} aria-hidden="true" /> New Plan
-        </button>
-      </div>
+      <PageHeader
+        eyebrow="Manage"
+        title="Plans &amp; Pricing"
+        description="The dinner packages customers see, with their pricing and features."
+        actions={
+          <button type="button" onClick={() => openEditor(null)} className="btn-primary !py-2 !px-3.5 text-sm">
+            <Plus size={16} aria-hidden="true" /> New plan
+          </button>
+        }
+      />
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {plans.map((p) => (

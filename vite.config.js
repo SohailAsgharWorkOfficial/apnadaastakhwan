@@ -7,9 +7,11 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // Split the heavy, rarely-changing vendors so the app shell stays small.
+        // Only list modules that are actually imported — Rollup treats a
+        // missing entry as a chunk to bundle on its own.
         manualChunks: {
           react: ['react', 'react-dom', 'react-router-dom'],
-          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
+          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
         },
       },
     },

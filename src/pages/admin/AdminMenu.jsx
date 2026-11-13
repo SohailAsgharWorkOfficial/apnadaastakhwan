@@ -8,6 +8,7 @@ import { useCollection } from '../../hooks/useFirestore';
 import Loader from '../../components/Loader';
 import ErrorState from '../../components/ErrorState';
 import Modal from '../../components/Modal';
+import { PageHeader, Panel } from '../../components/admin/AdminUI';
 import toast from 'react-hot-toast';
 
 const emptyMeal = { title: '', description: '', imageUrl: '', available: true };
@@ -161,13 +162,11 @@ export default function AdminMenu() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-1 flex items-center gap-2 text-gray-900">
-        <UtensilsCrossed size={22} className="text-brand-red-ink" aria-hidden="true" /> 4-Week
-        Rotational Menu Editor
-      </h1>
-      <p className="text-gray-500 text-sm mb-6">
-        Monday–Saturday dinners, Sunday off. Customers see updates live on Home &amp; Menu pages.
-      </p>
+      <PageHeader
+        eyebrow="Manage"
+        title="Weekly Menu Editor"
+        description="Monday–Saturday dinners, Sunday off. Customers see updates live on the Home & Menu pages."
+      />
 
       {loading && <Loader label="Loading menu…" />}
 
@@ -182,7 +181,7 @@ export default function AdminMenu() {
 
       {!loading && !error && (
         <>
-          <div className="flex flex-wrap gap-2 mb-6" role="group" aria-label="Select week to edit">
+          <div className="flex flex-wrap gap-2 mb-5" role="group" aria-label="Select week to edit">
             {WEEKS.map((w) => (
               <button
                 key={w}

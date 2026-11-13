@@ -12,6 +12,7 @@ import { MessageSquareQuote, Plus, Trash2, Star, Eye, EyeOff, Pencil } from 'luc
 import { db } from '../../firebase/firebase';
 import Loader from '../../components/Loader';
 import ErrorState from '../../components/ErrorState';
+import { PageHeader } from '../../components/admin/AdminUI';
 import toast from 'react-hot-toast';
 
 const empty = { name: '', area: '', quote: '', rating: 5, isPublished: true };
@@ -117,14 +118,12 @@ export default function AdminTestimonials() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-1 flex items-center gap-2 text-gray-900">
-        <MessageSquareQuote size={22} className="text-brand-red-ink" aria-hidden="true" />
-        Customer Reviews
-      </h1>
-      <p className="text-gray-500 text-sm mb-6">
-        Publish what customers actually told you — unpublish any review without
-        deleting it.
-      </p>
+      <PageHeader
+        eyebrow="Manage"
+        title="Customer Reviews"
+        description="Publish what customers actually told you — unpublish any review without deleting it."
+      />
+
 
       {/* Editor */}
       <form onSubmit={save} className="card max-w-2xl mb-8">

@@ -4,6 +4,7 @@ import { Bike, Printer, Phone, Moon, AlertTriangle, Check } from 'lucide-react';
 import { db } from '../../firebase/firebase';
 import { todayStr, todayName, fmtDate, TIME_SLOTS } from '../../utils/constants';
 import Loader from '../../components/Loader';
+import { PageHeader } from '../../components/admin/AdminUI';
 import toast from 'react-hot-toast';
 
 export default function AdminDelivery() {
@@ -52,28 +53,16 @@ export default function AdminDelivery() {
 
   return (
     <div>
-      <div className="flex items-center justify-between flex-wrap gap-3 mb-6 no-print">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-900">
-            <Bike size={22} className="text-brand-red-ink" aria-hidden="true" /> Rider Delivery Sheet
-          </h1>
-          <p className="text-gray-500 text-sm flex items-center gap-1.5 flex-wrap">
-            <span>
-              {todayName()}, {fmtDate(today)} — {lunchCount} dinner stops
-            </span>
-            {todayName() === 'Sunday' ? (
-              <span className="inline-flex items-center gap-1 text-orange-700">
-                <AlertTriangle size={14} aria-hidden="true" /> Sunday off — check specials
-              </span>
-            ) : (
-              <span>• 6-day dinner cycle (Mon–Sat)</span>
-            )}
-          </p>
-        </div>
-        <button onClick={() => window.print()} className="btn-primary">
-          <Printer size={16} /> Print Sheet
-        </button>
-      </div>
+      <PageHeader
+        eyebrow="Kitchen"
+        title="Rider Delivery Sheet"
+        description={`${todayName()}, ${fmtDate(today)} — ${lunchCount} dinner stops`}
+        actions={
+          <button type="button" onClick={() => window.print()} className="btn-primary !py-2 !px-3.5 text-sm">
+            <Printer size={16} aria-hidden="true" /> Print sheet
+          </button>
+        }
+      />
 
       <div className="flex gap-2 mb-5 no-print">
         {['all', 'lunch', 'dinner', 'both'].map((m) => (

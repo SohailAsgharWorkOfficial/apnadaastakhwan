@@ -1,11 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import {
-  getFirestore,
-  initializeFirestore,
-  persistentLocalCache,
-  persistentMultipleTabManager,
-} from 'firebase/firestore';
+import { getFirestore, initializeFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -21,32 +16,26 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
 /**
- * Firestore with resilient transport.
+ * Firestore with a resilient transport.
  *
  * The default WebChannel transport (gRPC-web over HTTP/2) silently stalls on
- * some corporate proxies, mobile networks and older routers — the UI just
- * spins forever. `experimentalAutoDetectLongPolling` falls back to long
- * polling automatically when that happens.
+ * some corporate proxies and mobile networks — the UI then spins forever.
+ * `experimentalAutoDetectLongPolling` falls back to long polling automatically
+ * when that happens, and costs nothing extra in the bundle (the long-polling
+ * transport ships either way).
  *
- * The local cache is also made persistent so the menu and plans stay readable
- * offline and survive a dropped connection.
+ * The persistent IndexedDB cache is deliberately NOT enabled: it adds ~24 KB
+ * gzip to every page load, which is a poor trade for a mostly-public menu
+ * site on mobile data.
  */
 function createFirestore() {
   try {
     return initializeFirestore(app, {
       experimentalAutoDetectLongPolling: true,
-      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
     });
   } catch {
-    // IndexedDB can be unavailable (private mode, blocked storage) and
     // initializeFirestore throws if it is called twice (hot reload).
-    try {
-      return initializeFirestore(app, {
-        experimentalAutoDetectLongPolling: true,
-      });
-    } catch {
-      return getFirestore(app);
-    }
+    return getFirestore(app);
   }
 }
 

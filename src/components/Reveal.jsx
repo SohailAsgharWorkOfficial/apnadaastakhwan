@@ -6,8 +6,11 @@ const prefersReducedMotion = () =>
 
 /**
  * Fades + lifts its children into view the first time they scroll into view.
- * Falls back to fully visible immediately when the user prefers reduced motion
- * or when IntersectionObserver is unavailable.
+ *
+ * Safety nets, because hidden content is worse than no animation:
+ *   • reduced motion  -> render visible immediately
+ *   • already in view -> reveal on mount, no waiting for the observer
+ *   • observer never fires -> a failsafe timer reveals it anyway
  */
 export default function Reveal({
   children,
@@ -30,6 +33,13 @@ export default function Reveal({
       return undefined;
     }
 
+    // Already on screen? No point waiting for a scroll.
+    const rect = node.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.95 && rect.bottom > 0) {
+      setShown(true);
+      return undefined;
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -43,7 +53,14 @@ export default function Reveal({
     );
 
     observer.observe(node);
-    return () => observer.disconnect();
+
+    // Failsafe: content must never stay invisible.
+    const failsafe = setTimeout(() => setShown(true), 3000);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(failsafe);
+    };
   }, [shown]);
 
   return (

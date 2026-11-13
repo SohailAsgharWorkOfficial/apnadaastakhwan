@@ -52,15 +52,10 @@ export async function handle(request, env) {
 
   const { CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET } = env;
 
-  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
-    return json(
-      {
-        error:
-          'Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET in the function environment.',
-      },
-      500
-    );
-  }
+  const missing = [];
+  if (!CLOUDINARY_CLOUD_NAME) missing.push('CLOUDINARY_CLOUD_NAME');
+  if (!CLOUDINARY_API_KEY) missing.push('CLOUDINARY_API_KEY');
+  if (!CLOUDINARY_API_SECRET) missing.push('CLOUDINARY_API_SECRET');
 
   const token = bearer(request);
 
@@ -78,9 +73,21 @@ export async function handle(request, env) {
     return json({
       ok: true,
       service: 'cloudinary-sign',
-      cloudName: CLOUDINARY_CLOUD_NAME,
+      cloudName: CLOUDINARY_CLOUD_NAME || null,
+      configured: missing.length === 0,
+      missing,
       time: new Date().toISOString(),
     });
+  }
+
+  if (missing.length) {
+    return json(
+      {
+        error: `Cloudinary is not fully configured. Missing environment variable${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}. Set ${missing.length > 1 ? 'them' : 'it'} in the function's environment.`,
+        missing,
+      },
+      500
+    );
   }
 
   if (!token) return json({ error: 'Missing authorization token' }, 401);

@@ -1,0 +1,11 @@
+# Never upload secrets to Vercel.
+.env
+.env.local
+.env*.local
+
+# Built by Vercel from source — the local copy is not needed.
+dist
+
+.git
+node_modules
+.vercel

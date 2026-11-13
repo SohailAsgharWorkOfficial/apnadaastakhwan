@@ -339,12 +339,23 @@ describe('handler', () => {
     assert.equal(allowed.status, 200);
   });
 
-  test('missing Cloudinary configuration returns a helpful error', async () => {
+  test('missing Cloudinary configuration names the exact variables', async () => {
     const res = await handle(
       post({ action: 'sign-upload' }, await makeToken()),
       env({ CLOUDINARY_API_SECRET: undefined })
     );
     assert.equal(res.status, 500);
-    assert.match((await res.json()).error, /not configured/i);
+    const body = await res.json();
+    assert.match(body.error, /not fully configured/i);
+    assert.deepEqual(body.missing, ['CLOUDINARY_API_SECRET']);
+  });
+
+  test('the ping reports which variables are missing', async () => {
+    const res = await handle(post({ action: 'ping' }), env({ CLOUDINARY_API_KEY: undefined }));
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.ok, true);
+    assert.equal(body.configured, false);
+    assert.deepEqual(body.missing, ['CLOUDINARY_API_KEY']);
   });
 });

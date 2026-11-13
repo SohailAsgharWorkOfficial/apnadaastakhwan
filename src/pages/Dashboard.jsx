@@ -124,12 +124,7 @@ export default function Dashboard() {
   const pastSubs = subs.filter((s) => !['active', 'paused', 'pending'].includes(s.status));
 
   const mealsLeft = activeSub ? remainingMeals(activeSub) : 0;
-  const currentWeek = activeSub
-    ? weekForDate(
-        activeSub.startDate,
-        todayStr() > activeSub.startDate ? todayStr() : activeSub.startDate
-      )
-    : null;
+  const currentWeek = activeSub ? weekForDate(todayStr()) : null;
 
   const togglePause = async (pause) => {
     if (!activeSub) return;

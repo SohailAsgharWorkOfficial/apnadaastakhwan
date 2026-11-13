@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "seed": "node scripts/seed.js",
     "check:firebase": "node scripts/check-firebase.js",
+    "check:sdk": "node scripts/check-sdk.js",
     "test": "node --test functions/test/adapters.test.js functions/test/cloudinary.test.js"
   },
   "dependencies": {

@@ -13,8 +13,8 @@ import {
   todayStr,
   addDays,
   fmtDate,
-  MENU_EPOCH,
   weekForDate,
+  weekDateRange,
   WHATSAPP_LINK,
 } from '../utils/constants';
 import SectionHeading from '../components/SectionHeading';
@@ -23,9 +23,9 @@ import Reveal from '../components/Reveal';
 /**
  * "What's cooking?" — pick any date and see exactly what is on the menu.
  *
- * The public calendar is anchored to MENU_EPOCH so the answer is always the
- * same for a given date. A subscriber's own cycle starts from their
- * subscription date instead.
+ * The rotation follows the calendar month: Week 1 is the 1st–7th, Week 2 the
+ * 8th–14th, Week 3 the 15th–21st and Week 4 the 22nd–28th. Everyone eats the
+ * same dish on the same date, whatever day they joined.
  */
 export default function WhatsCooking() {
   const [params, setParams] = useSearchParams();
@@ -35,6 +35,12 @@ export default function WhatsCooking() {
   const selected = params.get('date') || today;
 
   const dish = useMemo(() => dishForDate(menu, selected), [menu, selected]);
+
+  // The calendar week this date falls in, e.g. "1 – 7 Nov 2026".
+  const weekRange = useMemo(() => {
+    const d = new Date(`${selected}T00:00:00`);
+    return weekDateRange(weekForDate(selected), d.getFullYear(), d.getMonth() + 1);
+  }, [selected]);
 
   // 14 days centred on the selected date, skipping Sundays.
   const days = useMemo(() => {
@@ -131,6 +137,9 @@ export default function WhatsCooking() {
                 <div className="flex flex-wrap items-center gap-2 mb-3">
                   <span className="badge bg-brand-green-ink/10 text-brand-green-ink">
                     <UtensilsCrossed size={12} aria-hidden="true" /> Week {dish.week}
+                  </span>
+                  <span className="badge bg-gray-100 text-gray-700">
+                    {weekRange}
                   </span>
                   <span className="badge bg-brand-red-ink/10 text-brand-red-ink">
                     <Sparkles size={12} aria-hidden="true" /> {dish.day}
@@ -236,9 +245,9 @@ export default function WhatsCooking() {
       </div>
 
       <p className="text-xs text-gray-500 mt-8 text-center">
-        The public calendar follows the cycle anchored to {fmtDate(MENU_EPOCH)} (week{' '}
-        {weekForDate(MENU_EPOCH, selected)}). Your own subscription starts from the day
-        you joined, so your weeks may be offset.
+        The menu rotates with the calendar month — Week 1 is the 1st to the 7th, and
+        so on. Everyone eats the same dish on the same date, so the menu your
+        neighbour is having is the menu you are having.
       </p>
     </div>
   );

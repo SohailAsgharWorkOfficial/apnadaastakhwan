@@ -85,11 +85,15 @@ export const zoneForArea = (area) =>
   DELIVERY_ZONES.find((z) => z.blocks.includes(area)) || null;
 
 /**
- * Anchor for the public menu calendar — a Monday. The 4-week rotation maps
- * any calendar date to a week through this date, so "what am I eating on the
- * 14th?" always gives the same answer.
+ * The rotation follows the calendar month — see `weekForDate` below.
+ * Week 1 = 1st–7th, Week 2 = 8th–14th, Week 3 = 15th–21st, Week 4 = 22nd–28th.
  */
-export const MENU_EPOCH = '2026-01-05'; // a Monday
+export const ROTATION_WEEK_RANGES = [
+  { week: 1, from: 1, to: 7 },
+  { week: 2, from: 8, to: 14 },
+  { week: 3, from: 15, to: 21 },
+  { week: 4, from: 22, to: 28 },
+];
 
 /** Headline numbers for the hero — edit to match your real figures. */
 export const HERO_STATS = [
@@ -230,10 +234,28 @@ export const canPauseDate = (dateStr) => {
   return now < cutoff;
 };
 
-// Which week (1-4) of the rotational menu does a given date fall in?
-export const weekForDate = (startDate, dateStr) => {
-  const idx = Math.floor(diffDays(startDate, dateStr) / 7);
-  return ((idx % 4) + 4) % 4 + 1;
+/**
+ * Which week (1–4) of the rotational menu does a given date fall in?
+ *
+ * The rotation follows the **calendar month**: Week 1 is the 1st–7th, Week 2
+ * the 8th–14th, Week 3 the 15th–21st and Week 4 the 22nd–28th. The 29th–31st
+ * wrap back into Week 1. Everyone therefore eats the same dish on the same
+ * calendar date, whatever day they subscribed.
+ */
+export const weekForDate = (dateStr) => {
+  if (!dateStr) return 1;
+  const day = new Date(`${dateStr}T00:00:00`).getDate();
+  const week = Math.floor((day - 1) / 7) + 1;
+  return week > 4 ? 1 : week;
+};
+
+/** The date range a calendar week covers, e.g. "1 – 7 May 2026". */
+export const weekDateRange = (week, year, month) => {
+  const first = new Date(year, month - 1, (week - 1) * 7 + 1);
+  const last = new Date(year, month - 1, Math.min(week * 7, new Date(year, month, 0).getDate()));
+  const fmt = (d) =>
+    d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  return `${fmt(first)} – ${fmt(last)}`;
 };
 
 // Remaining dinner meals (Mon–Sat cycle, Sunday off, paused dates excluded)

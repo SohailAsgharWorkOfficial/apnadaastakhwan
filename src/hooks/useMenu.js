@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 import { useCollection } from './useFirestore';
-import { MENU_EPOCH, weekForDate, todayStr, addDays } from '../utils/constants';
+import { weekForDate, todayStr, addDays } from '../utils/constants';
 
 /**
  * The 4-week rotational menu, plus helpers to answer "what am I eating
  * on <date>?" — the question every subscriber asks.
  */
 export function useMenu() {
-  const { data, loading, error, retry } = useCollection('rotationalMenu');
+  const { data, loading, error, slow, retry } = useCollection('rotationalMenu');
 
   const menu = useMemo(() => {
     const map = {};
@@ -17,19 +17,19 @@ export function useMenu() {
     return map;
   }, [data]);
 
-  return { menu, loading, error, retry };
+  return { menu, loading, error, slow, retry };
 }
 
 /**
  * The dish served on a given date.
  *
- * Public visitors see the dish from the calendar rotation (anchored to
- * MENU_EPOCH); a subscriber's week is offset by their own start date.
+ * The rotation follows the calendar month, so the answer is the same for
+ * everyone: the 1st–7th is Week 1, the 8th–14th Week 2, and so on.
  */
-export function dishForDate(menu, dateStr, startDate = MENU_EPOCH) {
+export function dishForDate(menu, dateStr) {
   if (!menu || !dateStr) return null;
 
-  const week = weekForDate(startDate, dateStr);
+  const week = weekForDate(dateStr);
   const days = menu[week]?.days || {};
   const key = new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-US', {
     weekday: 'long',

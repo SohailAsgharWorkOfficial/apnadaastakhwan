@@ -24,13 +24,18 @@ function Stars({ rating = 5 }) {
  * invented, so the section stays honest as the business grows.
  */
 export default function Testimonials({ limit = 6, className = '' }) {
-  const { data, loading } = useCollection('testimonials', { orderField: 'createdAt' });
+  // The filter is required, not just tidy: Firestore only allows a public
+  // collection query when it can prove every returned document matches the
+  // rule. `where('isPublished', '==', true)` is what makes that provable.
+  const { data, loading, slow, retry } = useCollection('testimonials', {
+    whereField: 'isPublished',
+    whereValue: true,
+  });
 
   const published = data
     .filter((t) => t.isPublished !== false)
     .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
     .slice(0, limit);
-
   if (loading) {
     return (
       <div className={`grid md:grid-cols-2 lg:grid-cols-3 gap-5 ${className}`}>

@@ -107,6 +107,10 @@ const ADDONS = [
 ];
 
 // ===== 4-WEEK ROTATIONAL DINNER MENU (exact flyer, 24 dishes) =====
+// The rotation follows the CALENDAR MONTH:
+//   Week 1 = 1st-7th   Week 2 = 8th-14th
+//   Week 3 = 15th-21st Week 4 = 22nd-28th  (29th-31st wrap back to Week 1)
+// Every customer eats the same dish on the same calendar date.
 const ROTATIONAL_MENU = {
   week1: {
     week: 1,

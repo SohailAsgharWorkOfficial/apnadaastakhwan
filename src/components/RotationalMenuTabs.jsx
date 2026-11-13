@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { MapPin, UtensilsCrossed, Moon, Coffee } from 'lucide-react';
-import { DAYS, WEEKS, todayName, COVERAGE } from '../utils/constants';
+import { DAYS, WEEKS, todayName, COVERAGE, weekDateRange } from '../utils/constants';
 import { resolveImageUrl } from '../utils/storage';
 import Loader from './Loader';
 import ErrorState from './ErrorState';
@@ -58,6 +58,14 @@ export default function RotationalMenuTabs({ variant = 'cards' }) {
   const activeWeek = menu[week] ? week : availableWeeks[0];
   const days = menu[activeWeek]?.days || {};
 
+  // The rotation follows the calendar month, so show this month's date range
+  // for each week: Week 1 = 1st–7th, Week 2 = 8th–14th, and so on.
+  const now = new Date();
+  const weekRange = (w) => {
+    const r = weekDateRange(w, now.getFullYear(), now.getMonth() + 1);
+    return r.replace(/ \d{4}$/, '');
+  };
+
   // The banner always reflects the week the visitor is currently browsing,
   // so switching tabs shows that week's dish for the current day.
   const todayDish = today === 'Sunday' ? null : days[today];
@@ -81,6 +89,13 @@ export default function RotationalMenuTabs({ variant = 'cards' }) {
           }`}
       >
         Week {w}
+        <span
+          className={`block text-[10px] font-medium mt-0.5 ${
+            selected ? 'text-white/80' : 'text-gray-500'
+          }`}
+        >
+          {weekRange(w)}
+        </span>
       </button>
     );
   };

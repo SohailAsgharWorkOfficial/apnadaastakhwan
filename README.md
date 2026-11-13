@@ -233,6 +233,7 @@ src/
 
 ## Business Rules Implemented
 
+- **Menu rotation follows the calendar month:** Week 1 = the 1st–7th, Week 2 = 8th–14th, Week 3 = 15th–21st, Week 4 = 22nd–28th (the 29th–31st wrap back into Week 1). Every customer eats the **same dish on the same calendar date**, whatever day they subscribed. Each calendar week is exactly one Monday-to-Saturday dinner cycle, so a month is 24 dinners.
 - **Pause/Skip cutoff:** customers may pause any delivery date up to **10:00 PM the night before** (`canPauseDate` in `src/utils/constants.js`). Each paused day **extends the subscription end date by 1 day**.
 - **Payment:** COD or Easypaisa/JazzCash/Bank with screenshot upload to `Storage/payments/{uid}/...`; admins verify receipts in Admin → Orders.
 - **Role security:** `/admin` requires `role === "admin"` in the Firestore `users` doc, enforced both by route guard (`AdminRoute`) and `firestore.rules` (`isAdmin()`).

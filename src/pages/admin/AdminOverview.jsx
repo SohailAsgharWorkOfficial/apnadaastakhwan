@@ -58,10 +58,9 @@ export default function AdminOverview() {
   const groupBoxes = deliveringToday.reduce((sum, s) => sum + (s.groupOrder?.packs || 1), 0);
   const dinnerBoxes = groupBoxes;
 
-  const week = weekForDate(
-    deliveringToday[0]?.startDate || today,
-    today
-  );
+  // The rotation follows the calendar month, so everyone eats the same dish
+  // on the same date.
+  const week = weekForDate(today);
   const tonightDish =
     menu[week]?.days?.[todayName()]?.title || '—';
 
